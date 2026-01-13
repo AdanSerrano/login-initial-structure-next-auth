@@ -6,14 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:test": "tsx scripts/test-database.ts",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
-    "@prisma/extension-accelerate": "^3.0.1",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@types/pg": "^8.16.0",
