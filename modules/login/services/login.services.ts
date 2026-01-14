@@ -1,71 +1,39 @@
-import { signIn } from "@/auth";
-import bcrypt from "bcryptjs";
-import { AuthError } from "next-auth";
-import { LoginRepository } from "../repository/login.repository";
-import {
-  LoginUser,
-  createLoginFormSchema,
-} from "../validations/schema/login.schema";
+import { LoginUser } from "../validations/schema/login.schema";
+import { LoginAuthService } from "./login.auth.service";
+import { LoginDomainService } from "./login.domain.service";
 
 export class LoginService {
-  private loginRepository: LoginRepository;
+  private loginDomainService: LoginDomainService;
+  private loginAuthService: LoginAuthService;
 
   constructor() {
-    this.loginRepository = new LoginRepository();
+    this.loginDomainService = new LoginDomainService();
+    this.loginAuthService = new LoginAuthService();
   }
 
   public async login(loginUser: LoginUser) {
     try {
-      const validatedFields = createLoginFormSchema.safeParse(loginUser);
+      const domainValidation =
+        await this.loginDomainService.validateLoginBusinessRules(loginUser);
 
-      if (!validatedFields.success) {
-        return { error: "Campos inválidos" };
-      }
-
-      const { identifier, password } = validatedFields.data;
-      const user = await this.loginRepository.getUserByIdentifier(loginUser);
-      if (!user) {
-        return { error: "Usuario no encontrado" };
+      if (!domainValidation.isValid) {
+        return {
+          error: domainValidation.error,
+          redirect: domainValidation.redirect,
+        };
       }
 
-      if (!user.email || !user.password) {
-        return { error: "Usuario no tiene email o contraseña configurada" };
-      }
-      const passwordMatch = await bcrypt.compare(password, user.password);
-      if (!passwordMatch) {
-        return { error: "Contraseña incorrecta" };
-      }
-      if (!user.emailVerified) {
-        // const verificationToken = await generateVerificationToken(user.email);
-        // await sendVerificationEmail(
-        //   user.email,
-        //   verificationToken.token,
-        //   locale,
-        //   user.name
-        // );
-        // return { success: tErrors("verificationEmailSent"), redirect: false };
-        return { error: "Usuario no verificado", redirect: false };
+      const identifier = domainValidation.identifier;
+      if (!identifier) {
+        return { error: "Error interno de validación" };
       }
 
-      try {
-        await signIn("credentials", {
-          identifier,
-          password,
-          redirect: false,
-        });
+      const authResult = await this.loginAuthService.authenticateUser(
+        identifier,
+        loginUser.password
+      );
 
-        return { success: "Login Realizado Correctamente", redirect: true };
-      } catch (error) {
-        console.error("Error en signIn:", error);
-        if (error instanceof AuthError) {
-          return { error: "Credenciales incorrectas" };
-        }
-        if ((error as Error).message === "NEXT_REDIRECT") {
-          console.log("Redirección detectada, ignorando...");
-          return { success: "Login Realizado Correctamente", redirect: true };
-        }
-        return { error: "Error al iniciar sesión" };
-      }
+      return authResult;
     } catch (error) {
       console.error("Error en login service:", error);
       return { error: "Error al verificar credenciales" };
