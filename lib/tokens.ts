@@ -95,3 +95,64 @@ export const getPasswordResetTokenByEmail = async (email: string) => {
     return null;
   }
 };
+
+const generateSixDigitCode = (): string => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+export const generateTwoFactorToken = async (email: string) => {
+  const token = generateSixDigitCode();
+  const expires = new Date(new Date().getTime() + 10 * 60 * 1000); // 10 minutos
+
+  const existingToken = await db.twoFactorToken.findFirst({
+    where: { email },
+  });
+
+  if (existingToken) {
+    await db.twoFactorToken.delete({
+      where: { id: existingToken.id },
+    });
+  }
+
+  const twoFactorToken = await db.twoFactorToken.create({
+    data: {
+      email,
+      token,
+      expires,
+    },
+  });
+
+  return twoFactorToken;
+};
+
+export const getTwoFactorTokenByToken = async (token: string) => {
+  try {
+    const twoFactorToken = await db.twoFactorToken.findUnique({
+      where: { token },
+    });
+    return twoFactorToken;
+  } catch {
+    return null;
+  }
+};
+
+export const getTwoFactorTokenByEmail = async (email: string) => {
+  try {
+    const twoFactorToken = await db.twoFactorToken.findFirst({
+      where: { email },
+    });
+    return twoFactorToken;
+  } catch {
+    return null;
+  }
+};
+
+export const deleteTwoFactorToken = async (id: string) => {
+  try {
+    await db.twoFactorToken.delete({
+      where: { id },
+    });
+  } catch {
+    return null;
+  }
+};

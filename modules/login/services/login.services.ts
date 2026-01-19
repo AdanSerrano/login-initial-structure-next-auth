@@ -3,6 +3,9 @@ import {
   formatResetTime,
   resetRateLimit,
 } from "@/lib/rate-limit";
+import { generateTwoFactorToken } from "@/lib/tokens";
+import { db } from "@/utils/db";
+import { sendTwoFactorEmail } from "@/modules/two-factor/emails/two-factor.emails";
 import { LoginUser } from "../validations/schema/login.schema";
 import { LoginAuthService, AuthResult } from "./login.auth.service";
 import { LoginDomainService } from "./login.domain.service";
@@ -10,6 +13,8 @@ import { LoginDomainService } from "./login.domain.service";
 export interface LoginResult extends AuthResult {
   rateLimited?: boolean;
   remainingAttempts?: number;
+  requiresTwoFactor?: boolean;
+  email?: string;
 }
 
 export class LoginService {
@@ -45,8 +50,31 @@ export class LoginService {
       }
 
       const identifier = domainValidation.identifier;
-      if (!identifier) {
+      const user = domainValidation.user;
+
+      if (!identifier || !user) {
         return { error: "Error interno de validación" };
+      }
+
+      if (user.isTwoFactorEnabled && user.email) {
+        const twoFactorConfirmation = await db.twoFactorConfirmation.findUnique({
+          where: { userId: user.id },
+        });
+
+        if (twoFactorConfirmation) {
+          await db.twoFactorConfirmation.delete({
+            where: { id: twoFactorConfirmation.id },
+          });
+        } else {
+          const twoFactorToken = await generateTwoFactorToken(user.email);
+          await sendTwoFactorEmail(user.email, twoFactorToken.token);
+
+          return {
+            requiresTwoFactor: true,
+            email: user.email,
+            success: "Código de verificación enviado",
+          };
+        }
       }
 
       const authResult = await this.loginAuthService.authenticateUser(
