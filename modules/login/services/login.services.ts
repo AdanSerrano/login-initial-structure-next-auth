@@ -1,6 +1,16 @@
+import {
+  checkRateLimit,
+  formatResetTime,
+  resetRateLimit,
+} from "@/lib/rate-limit";
 import { LoginUser } from "../validations/schema/login.schema";
-import { LoginAuthService } from "./login.auth.service";
+import { LoginAuthService, AuthResult } from "./login.auth.service";
 import { LoginDomainService } from "./login.domain.service";
+
+export interface LoginResult extends AuthResult {
+  rateLimited?: boolean;
+  remainingAttempts?: number;
+}
 
 export class LoginService {
   private loginDomainService: LoginDomainService;
@@ -11,8 +21,18 @@ export class LoginService {
     this.loginAuthService = new LoginAuthService();
   }
 
-  public async login(loginUser: LoginUser) {
+  public async login(loginUser: LoginUser): Promise<LoginResult> {
     try {
+      const rateLimitKey = loginUser.identifier.toLowerCase();
+      const rateLimit = checkRateLimit(rateLimitKey);
+
+      if (!rateLimit.allowed) {
+        return {
+          error: `Demasiados intentos fallidos. Intenta de nuevo en ${formatResetTime(rateLimit.resetIn)}.`,
+          rateLimited: true,
+        };
+      }
+
       const domainValidation =
         await this.loginDomainService.validateLoginBusinessRules(loginUser);
 
@@ -20,6 +40,7 @@ export class LoginService {
         return {
           error: domainValidation.error,
           redirect: domainValidation.redirect,
+          remainingAttempts: rateLimit.remainingAttempts,
         };
       }
 
@@ -32,6 +53,10 @@ export class LoginService {
         identifier,
         loginUser.password
       );
+
+      if (authResult.success) {
+        resetRateLimit(rateLimitKey);
+      }
 
       return authResult;
     } catch (error) {

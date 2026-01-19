@@ -1,7 +1,6 @@
 import { LoginRepository } from "../repository/login.repository";
+import { LoginValidationService } from "../validations/login.validation.service";
 import { LoginUser } from "../validations/schema/login.schema";
-import { LoginPasswordService } from "./login.password.service";
-import { LoginValidationService } from "./login.validation.service";
 
 export interface DomainValidationResult {
   isValid: boolean;
@@ -14,12 +13,10 @@ export interface DomainValidationResult {
 export class LoginDomainService {
   private loginRepository: LoginRepository;
   private loginValidationService: LoginValidationService;
-  private loginPasswordService: LoginPasswordService;
 
   constructor() {
     this.loginRepository = new LoginRepository();
     this.loginValidationService = new LoginValidationService();
-    this.loginPasswordService = new LoginPasswordService();
   }
 
   public async validateLoginBusinessRules(
@@ -36,38 +33,21 @@ export class LoginDomainService {
         };
       }
 
-      const { identifier, password } = validationResult.data;
-
+      const { identifier } = validationResult.data;
       const user = await this.loginRepository.getUserByIdentifier(loginUser);
-      if (!user) {
-        return {
-          isValid: false,
-          error: "Usuario no encontrado",
-        };
-      }
 
-      if (!user.email || !user.password) {
+      if (!user || !user.email || !user.password) {
         return {
           isValid: false,
-          error: "Usuario no tiene email o contraseña configurada",
-        };
-      }
-
-      const passwordMatch = await this.loginPasswordService.comparePassword(
-        password,
-        user.password
-      );
-      if (!passwordMatch) {
-        return {
-          isValid: false,
-          error: "Contraseña incorrecta",
+          error: "Credenciales inválidas",
         };
       }
 
       if (!user.emailVerified) {
         return {
           isValid: false,
-          error: "Usuario no verificado",
+          error:
+            "Tu cuenta aún no está verificada. Revisa tu email para activarla.",
           redirect: false,
         };
       }
@@ -81,7 +61,7 @@ export class LoginDomainService {
       console.error("Error in domain validation:", error);
       return {
         isValid: false,
-        error: "Error al validar credenciales",
+        error: "Error al verificar credenciales",
       };
     }
   }

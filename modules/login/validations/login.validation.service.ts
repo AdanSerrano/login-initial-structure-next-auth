@@ -1,7 +1,7 @@
 import {
   LoginUser,
   createLoginFormSchema,
-} from "../validations/schema/login.schema";
+} from "./schema/login.schema";
 
 export interface ValidationResult {
   isValid: boolean;

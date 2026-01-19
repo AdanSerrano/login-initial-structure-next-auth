@@ -39,18 +39,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
-    async jwt({ token }) {
-      if (!token.sub) return token;
-      const existingUser = await db.user.findUnique({
-        where: { id: token.sub },
-      });
-      if (!existingUser) return token;
-      token.userName = existingUser.userName ?? undefined;
-      token.name = existingUser.name;
-      token.email = existingUser.email;
-      token.role = existingUser.role;
-      token.image = existingUser.image;
-      token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
+    async jwt({ token, user, trigger }) {
+      // Solo cargar datos del usuario cuando:
+      // 1. Es un nuevo login (user existe)
+      // 2. Se solicita actualización explícita (trigger === "update")
+      if (user) {
+        // Nuevo login - cargar datos iniciales del usuario
+        token.userName = user.userName ?? undefined;
+        token.name = user.name;
+        token.email = user.email;
+        token.role = user.role;
+        token.image = user.image;
+        token.isTwoFactorEnabled = user.isTwoFactorEnabled;
+        return token;
+      }
+
+      // Solo refrescar datos de la DB si se solicita explícitamente
+      if (trigger === "update" && token.sub) {
+        const existingUser = await db.user.findUnique({
+          where: { id: token.sub },
+        });
+        if (existingUser) {
+          token.userName = existingUser.userName ?? undefined;
+          token.name = existingUser.name;
+          token.email = existingUser.email;
+          token.role = existingUser.role;
+          token.image = existingUser.image;
+          token.isTwoFactorEnabled = existingUser.isTwoFactorEnabled;
+        }
+      }
+
       return token;
     },
   },

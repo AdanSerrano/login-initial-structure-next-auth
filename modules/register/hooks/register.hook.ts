@@ -22,7 +22,6 @@ export const useRegister = () => {
     startTransition(async () => {
       registerAction(values)
         .then((result) => {
-          console.log(result);
           if (result?.error) {
             setError(result.error);
             toast.error(result.error);
@@ -30,9 +29,8 @@ export const useRegister = () => {
           }
           if (result?.success) {
             toast.success(result.success);
-            setTimeout(() => {
-              router.push("/login");
-            }, 2000);
+            // Redirigir a la página de éxito de registro
+            router.push("/register-success");
           }
         })
         .catch((err) => {
