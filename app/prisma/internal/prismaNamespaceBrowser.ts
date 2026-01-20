@@ -55,6 +55,7 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   TwoFactorToken: 'TwoFactorToken',
+  MagicLinkToken: 'MagicLinkToken',
   twoFactorConfirmation: 'twoFactorConfirmation',
   AuditLog: 'AuditLog'
 } as const
@@ -130,6 +131,16 @@ export const TwoFactorTokenScalarFieldEnum = {
 } as const
 
 export type TwoFactorTokenScalarFieldEnum = (typeof TwoFactorTokenScalarFieldEnum)[keyof typeof TwoFactorTokenScalarFieldEnum]
+
+
+export const MagicLinkTokenScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  token: 'token',
+  expires: 'expires'
+} as const
+
+export type MagicLinkTokenScalarFieldEnum = (typeof MagicLinkTokenScalarFieldEnum)[keyof typeof MagicLinkTokenScalarFieldEnum]
 
 
 export const TwoFactorConfirmationScalarFieldEnum = {

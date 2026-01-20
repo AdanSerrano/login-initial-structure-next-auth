@@ -38,6 +38,11 @@ export type PasswordResetToken = Prisma.PasswordResetTokenModel
  */
 export type TwoFactorToken = Prisma.TwoFactorTokenModel
 /**
+ * Model MagicLinkToken
+ * 
+ */
+export type MagicLinkToken = Prisma.MagicLinkTokenModel
+/**
  * Model twoFactorConfirmation
  * 
  */

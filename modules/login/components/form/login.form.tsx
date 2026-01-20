@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoginViewModel } from "@/modules/login/view-model/login.view-model";
 import { cn } from "@/lib/utils";
-import { Loader2, LogIn, ShieldCheck, KeyRound } from "lucide-react";
+import { Loader2, LogIn, ShieldCheck, KeyRound, Wand2 } from "lucide-react";
 import Link from "next/link";
 import { PasswordInput } from "@/components/ui/pasword-input";
 import { memo } from "react";
@@ -111,99 +111,107 @@ export const LoginForm = memo(function LoginForm() {
           )}
 
           <FormField
-          control={form.control}
-          name="identifier"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email o nombre de usuario</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="tu@email.com"
-                  autoComplete="username"
-                  aria-label="Email o nombre de usuario"
-                  {...field}
-                  disabled={isPending}
-                  className={cn(
-                    form.formState.errors.identifier && "border-destructive"
-                  )}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            control={form.control}
+            name="identifier"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email o nombre de usuario</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="tu@email.com"
+                    autoComplete="username"
+                    aria-label="Email o nombre de usuario"
+                    {...field}
+                    disabled={isPending}
+                    className={cn(
+                      form.formState.errors.identifier && "border-destructive"
+                    )}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between">
-                <FormLabel>Contraseña</FormLabel>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
-                >
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
-              <FormControl>
-                <PasswordInput
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  aria-label="Contraseña"
-                  {...field}
-                  disabled={isPending}
-                  className={cn(
-                    "pr-10",
-                    form.formState.errors.password && "border-destructive"
-                  )}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Contraseña</FormLabel>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+                <FormControl>
+                  <PasswordInput
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    aria-label="Contraseña"
+                    {...field}
+                    disabled={isPending}
+                    className={cn(
+                      "pr-10",
+                      form.formState.errors.password && "border-destructive"
+                    )}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        {error && (
-          <div
-            role="alert"
-            aria-live="polite"
-            className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20"
+          {error && (
+            <div
+              role="alert"
+              aria-live="polite"
+              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20"
+            >
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            disabled={isPending}
+            aria-busy={isPending}
+            className="w-full"
           >
-            {error}
-          </div>
-        )}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                Iniciando sesión...
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-4 w-4" aria-hidden="true" />
+                Iniciar sesión
+              </>
+            )}
+          </Button>
 
-        <Button
-          type="submit"
-          disabled={isPending}
-          aria-busy={isPending}
-          className="w-full"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              Iniciando sesión...
-            </>
-          ) : (
-            <>
-              <LogIn className="mr-2 h-4 w-4" aria-hidden="true" />
-              Iniciar sesión
-            </>
-          )}
-        </Button>
-
-        <p className="text-center text-sm text-muted-foreground">
-          ¿No tienes una cuenta?{" "}
           <Link
-            href="/register"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            href="/magic-link"
+            className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
           >
-            Crear cuenta
+            <Wand2 className="h-4 w-4" />
+            Iniciar sesión con Magic Link
           </Link>
-        </p>
+
+          <p className="text-center text-sm text-muted-foreground">
+            ¿No tienes una cuenta?{" "}
+            <Link
+              href="/register"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Crear cuenta
+            </Link>
+          </p>
         </form>
       </Form>
     </>

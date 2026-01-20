@@ -388,6 +388,7 @@ export const ModelName = {
   VerificationToken: 'VerificationToken',
   PasswordResetToken: 'PasswordResetToken',
   TwoFactorToken: 'TwoFactorToken',
+  MagicLinkToken: 'MagicLinkToken',
   twoFactorConfirmation: 'twoFactorConfirmation',
   AuditLog: 'AuditLog'
 } as const
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "verificationToken" | "passwordResetToken" | "twoFactorToken" | "twoFactorConfirmation" | "auditLog"
+    modelProps: "user" | "verificationToken" | "passwordResetToken" | "twoFactorToken" | "magicLinkToken" | "twoFactorConfirmation" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -705,6 +706,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MagicLinkToken: {
+      payload: Prisma.$MagicLinkTokenPayload<ExtArgs>
+      fields: Prisma.MagicLinkTokenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MagicLinkTokenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MagicLinkTokenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>
+        }
+        findFirst: {
+          args: Prisma.MagicLinkTokenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MagicLinkTokenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>
+        }
+        findMany: {
+          args: Prisma.MagicLinkTokenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>[]
+        }
+        create: {
+          args: Prisma.MagicLinkTokenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>
+        }
+        createMany: {
+          args: Prisma.MagicLinkTokenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MagicLinkTokenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>[]
+        }
+        delete: {
+          args: Prisma.MagicLinkTokenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>
+        }
+        update: {
+          args: Prisma.MagicLinkTokenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>
+        }
+        deleteMany: {
+          args: Prisma.MagicLinkTokenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MagicLinkTokenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MagicLinkTokenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>[]
+        }
+        upsert: {
+          args: Prisma.MagicLinkTokenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MagicLinkTokenPayload>
+        }
+        aggregate: {
+          args: Prisma.MagicLinkTokenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMagicLinkToken>
+        }
+        groupBy: {
+          args: Prisma.MagicLinkTokenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MagicLinkTokenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MagicLinkTokenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MagicLinkTokenCountAggregateOutputType> | number
+        }
+      }
+    }
     twoFactorConfirmation: {
       payload: Prisma.$twoFactorConfirmationPayload<ExtArgs>
       fields: Prisma.twoFactorConfirmationFieldRefs
@@ -947,6 +1022,16 @@ export const TwoFactorTokenScalarFieldEnum = {
 } as const
 
 export type TwoFactorTokenScalarFieldEnum = (typeof TwoFactorTokenScalarFieldEnum)[keyof typeof TwoFactorTokenScalarFieldEnum]
+
+
+export const MagicLinkTokenScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  token: 'token',
+  expires: 'expires'
+} as const
+
+export type MagicLinkTokenScalarFieldEnum = (typeof MagicLinkTokenScalarFieldEnum)[keyof typeof MagicLinkTokenScalarFieldEnum]
 
 
 export const TwoFactorConfirmationScalarFieldEnum = {
@@ -1220,6 +1305,7 @@ export type GlobalOmitConfig = {
   verificationToken?: Prisma.VerificationTokenOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   twoFactorToken?: Prisma.TwoFactorTokenOmit
+  magicLinkToken?: Prisma.MagicLinkTokenOmit
   twoFactorConfirmation?: Prisma.twoFactorConfirmationOmit
   auditLog?: Prisma.AuditLogOmit
 }
