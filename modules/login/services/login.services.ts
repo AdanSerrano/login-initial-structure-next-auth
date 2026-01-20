@@ -23,6 +23,11 @@ export interface LoginResult extends AuthResult {
   daysRemaining?: number;
 }
 
+export interface RequestContext {
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
 export class LoginService {
   private loginDomainService: LoginDomainService;
   private loginAuthService: LoginAuthService;
@@ -32,7 +37,7 @@ export class LoginService {
     this.loginAuthService = new LoginAuthService();
   }
 
-  public async login(loginUser: LoginUser): Promise<LoginResult> {
+  public async login(loginUser: LoginUser, context?: RequestContext): Promise<LoginResult> {
     try {
       const domainValidation =
         await this.loginDomainService.validateLoginBusinessRules(loginUser);
@@ -89,7 +94,9 @@ export class LoginService {
         const failedResult = await recordFailedLogin(
           user.id,
           user.email || identifier,
-          "Contraseña incorrecta"
+          "Contraseña incorrecta",
+          context?.ipAddress ?? undefined,
+          context?.userAgent ?? undefined
         );
 
         if (!failedResult.allowed) {
@@ -133,7 +140,11 @@ export class LoginService {
 
       if (authResult.success) {
         await resetFailedAttempts(user.id);
-        await logLoginSuccess(user.id);
+        await logLoginSuccess(
+          user.id,
+          context?.ipAddress ?? undefined,
+          context?.userAgent ?? undefined
+        );
       }
 
       return authResult;

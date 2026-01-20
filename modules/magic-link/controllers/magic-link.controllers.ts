@@ -1,4 +1,4 @@
-import { MagicLinkService } from "../services/magic-link.services";
+import { MagicLinkService, RequestContext } from "../services/magic-link.services";
 import { RequestMagicLinkInput } from "../validations/schema/magic-link.schema";
 
 export class MagicLinkController {
@@ -8,11 +8,11 @@ export class MagicLinkController {
     this.service = new MagicLinkService();
   }
 
-  async requestMagicLink(input: RequestMagicLinkInput) {
-    return await this.service.requestMagicLink(input);
+  async requestMagicLink(input: RequestMagicLinkInput, context?: RequestContext) {
+    return await this.service.requestMagicLink(input, context);
   }
 
-  async verifyMagicLink(token: string) {
-    return await this.service.verifyMagicLink(token);
+  async verifyMagicLink(token: string, context?: RequestContext) {
+    return await this.service.verifyMagicLink(token, context);
   }
 }

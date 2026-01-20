@@ -1,9 +1,11 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 import { Adapter } from "next-auth/adapters";
+import { headers } from "next/headers";
 import { Role } from "./app/prisma/enums";
 import authConfig from "./auth.config";
 import { db } from "./utils/db";
+import { createUserSession, deleteSessionByToken, isSessionValid } from "./lib/session-manager";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
@@ -18,15 +20,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         data: { emailVerified: new Date() },
       });
     },
+    async signOut(message) {
+      if ("token" in message && message.token?.sessionToken) {
+        await deleteSessionByToken(message.token.sessionToken as string);
+      }
+    },
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider !== "credentials") return true;
+      if (account?.provider !== "credentials" && account?.provider !== "magic-link") {
+        return true;
+      }
       const existingUser = await db.user.findUnique({ where: { id: user.id } });
       if (!existingUser?.emailVerified) return false;
       return true;
     },
     async session({ token, session }) {
+      // Si la sesión fue revocada, marcarla para que el cliente lo detecte
+      if (token.sessionRevoked) {
+        (session as { sessionRevoked?: boolean }).sessionRevoked = true;
+        return session;
+      }
+
       if (session.user) {
         if (token.sub) session.user.id = token.sub;
         session.user.userName = token.userName as string;
@@ -36,17 +51,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as Role;
         session.user.isTwoFactorEnabled = token.isTwoFactorEnabled as boolean;
       }
+      if (token.sessionToken) {
+        (session as { sessionToken?: string }).sessionToken =
+          token.sessionToken as string;
+      }
       return session;
     },
     async jwt({ token, user, trigger, session }) {
-      if (user) {
+      if (user && trigger === "signIn") {
         token.userName = user.userName ?? undefined;
         token.name = user.name;
         token.email = user.email;
         token.role = user.role;
         token.image = user.image;
         token.isTwoFactorEnabled = user.isTwoFactorEnabled;
+
+        try {
+          const headersList = await headers();
+          const userAgent = headersList.get("user-agent");
+          const forwarded = headersList.get("x-forwarded-for");
+          const realIp = headersList.get("x-real-ip");
+          const ipAddress = forwarded?.split(",")[0]?.trim() || realIp || null;
+
+          const sessionResult = await createUserSession({
+            userId: user.id!,
+            userAgent,
+            ipAddress,
+          });
+
+          if (sessionResult) {
+            token.sessionToken = sessionResult.token;
+          }
+        } catch (error) {
+          console.error("Error creating session on sign in:", error);
+        }
+
         return token;
+      }
+
+      // Verificar si la sesión fue revocada (solo si hay sessionToken)
+      if (token.sessionToken) {
+        const sessionExists = await isSessionValid(token.sessionToken as string);
+        if (!sessionExists) {
+          // Marcar el token como revocado para que el middleware lo detecte
+          token.sessionRevoked = true;
+          return token;
+        }
       }
 
       if (trigger === "update") {

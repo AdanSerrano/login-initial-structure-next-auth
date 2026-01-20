@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/auth";
 import { CookieConsentBanner } from "@/components/cookie-consent/cookie-consent";
+import { SessionGuard } from "@/components/auth/session-guard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -169,7 +170,9 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <SessionProvider session={session}>
-          {children}
+          <SessionGuard>
+            {children}
+          </SessionGuard>
           <CookieConsentBanner />
         </SessionProvider>
         <Toaster position="bottom-right" richColors  closeButton={true} duration={3000} />

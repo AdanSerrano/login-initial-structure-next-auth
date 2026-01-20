@@ -46,6 +46,8 @@ export const useLogin = () => {
   });
   const [credentials, setCredentials] = useState<LoginActionInput | null>(null);
 
+  const sessionExpired = searchParams.get("sessionExpired") === "true";
+
   const form = useForm<LoginUser>({
     resolver: zodResolver(createLoginFormSchema),
     defaultValues: {
@@ -182,6 +184,7 @@ export const useLogin = () => {
     form,
     twoFactor,
     pendingDeletion,
+    sessionExpired,
     completeTwoFactorLogin,
     cancelTwoFactor,
     closeTwoFactorDialog,

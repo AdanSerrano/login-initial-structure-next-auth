@@ -1,4 +1,4 @@
-import { LoginService } from "../services/login.services";
+import { LoginService, RequestContext } from "../services/login.services";
 import { LoginUser } from "../validations/schema/login.schema";
 
 export class LoginController {
@@ -8,7 +8,7 @@ export class LoginController {
     this.loginService = new LoginService();
   }
 
-  public async handleLogin(loginUser: LoginUser) {
-    return await this.loginService.login(loginUser);
+  public async handleLogin(loginUser: LoginUser, context?: RequestContext) {
+    return await this.loginService.login(loginUser, context);
   }
 }

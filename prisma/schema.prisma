@@ -44,6 +44,7 @@ model User {
   updatedAt             DateTime               @updatedAt
   twoFactorConfirmation twoFactorConfirmation?
   auditLogs             AuditLog[]
+  sessions              Session[]
 }
 
 model VerificationToken {
@@ -128,5 +129,22 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  deviceType String?
+  browser    String?
+  os         String?
+  ipAddress  String?
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([lastActive])
 }
 

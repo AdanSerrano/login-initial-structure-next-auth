@@ -57,7 +57,8 @@ export const ModelName = {
   TwoFactorToken: 'TwoFactorToken',
   MagicLinkToken: 'MagicLinkToken',
   twoFactorConfirmation: 'twoFactorConfirmation',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  Session: 'Session'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -162,6 +163,21 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const SessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token',
+  deviceType: 'deviceType',
+  browser: 'browser',
+  os: 'os',
+  ipAddress: 'ipAddress',
+  lastActive: 'lastActive',
+  createdAt: 'createdAt'
+} as const
+
+export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
 export const SortOrder = {

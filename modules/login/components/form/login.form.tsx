@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoginViewModel } from "@/modules/login/view-model/login.view-model";
 import { cn } from "@/lib/utils";
-import { Loader2, LogIn, ShieldCheck, KeyRound, Wand2 } from "lucide-react";
+import { Loader2, LogIn, ShieldCheck, KeyRound, Wand2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { PasswordInput } from "@/components/ui/pasword-input";
 import { memo } from "react";
@@ -34,6 +34,7 @@ export const LoginForm = memo(function LoginForm() {
     error,
     twoFactor,
     pendingDeletion,
+    sessionExpired,
     completeTwoFactorLogin,
     cancelTwoFactor,
     closeTwoFactorDialog,
@@ -86,6 +87,25 @@ export const LoginForm = memo(function LoginForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-5">
+          {sessionExpired && (
+            <div
+              role="alert"
+              className="flex items-center gap-3 rounded-xl bg-amber-500/10 px-4 py-3 border border-amber-500/20"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
+                <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  Sesión cerrada
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Tu sesión fue cerrada desde otro dispositivo
+                </p>
+              </div>
+            </div>
+          )}
+
           {isTwoFactorPending && !twoFactor.dialogOpen && (
             <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 border border-primary/20">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">

@@ -65,12 +65,16 @@ export class MagicLinkRepository {
   async createAuditLog(
     userId: string | null,
     action: "MAGIC_LINK_REQUESTED" | "MAGIC_LINK_LOGIN",
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
+    ipAddress?: string | null,
+    userAgent?: string | null
   ) {
     await db.auditLog.create({
       data: {
         userId,
         action,
+        ipAddress,
+        userAgent,
         metadata: metadata as Prisma.InputJsonValue | undefined,
       },
     });

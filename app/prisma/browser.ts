@@ -52,3 +52,8 @@ export type twoFactorConfirmation = Prisma.twoFactorConfirmationModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model Session
+ * 
+ */
+export type Session = Prisma.SessionModel

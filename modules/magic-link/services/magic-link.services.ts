@@ -19,6 +19,11 @@ export interface MagicLinkResult {
   };
 }
 
+export interface RequestContext {
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
 export class MagicLinkService {
   private repository: MagicLinkRepository;
 
@@ -26,7 +31,10 @@ export class MagicLinkService {
     this.repository = new MagicLinkRepository();
   }
 
-  async requestMagicLink(input: RequestMagicLinkInput): Promise<MagicLinkResult> {
+  async requestMagicLink(
+    input: RequestMagicLinkInput,
+    context?: RequestContext
+  ): Promise<MagicLinkResult> {
     const validatedFields = requestMagicLinkSchema.safeParse(input);
 
     if (!validatedFields.success) {
@@ -66,16 +74,23 @@ export class MagicLinkService {
       return { error: "Error al enviar el email" };
     }
 
-    await this.repository.createAuditLog(user.id, "MAGIC_LINK_REQUESTED", {
-      email,
-    });
+    await this.repository.createAuditLog(
+      user.id,
+      "MAGIC_LINK_REQUESTED",
+      { email },
+      context?.ipAddress,
+      context?.userAgent
+    );
 
     return {
       success: "Te hemos enviado un enlace para iniciar sesión",
     };
   }
 
-  async verifyMagicLink(token: string): Promise<MagicLinkResult> {
+  async verifyMagicLink(
+    token: string,
+    context?: RequestContext
+  ): Promise<MagicLinkResult> {
     const magicLinkToken = await this.repository.getMagicLinkTokenByToken(token);
 
     if (!magicLinkToken) {
@@ -108,9 +123,13 @@ export class MagicLinkService {
 
     await this.repository.deleteMagicLinkToken(magicLinkToken.id);
 
-    await this.repository.createAuditLog(user.id, "MAGIC_LINK_LOGIN", {
-      email: user.email,
-    });
+    await this.repository.createAuditLog(
+      user.id,
+      "MAGIC_LINK_LOGIN",
+      { email: user.email },
+      context?.ipAddress,
+      context?.userAgent
+    );
 
     return {
       success: "Sesión iniciada correctamente",
