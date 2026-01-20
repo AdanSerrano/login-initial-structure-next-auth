@@ -119,7 +119,7 @@ export const LoginForm = memo(function LoginForm() {
                 <FormControl>
                   <Input
                     type="text"
-                    placeholder="tu@email.com"
+                    placeholder="tu@email.com o nombre de usuario"
                     autoComplete="username"
                     aria-label="Email o nombre de usuario"
                     {...field}
