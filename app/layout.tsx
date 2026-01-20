@@ -4,6 +4,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/auth";
+import { ReCaptchaProvider } from "@/components/recaptcha/recaptcha-provider";
+import { CookieConsentBanner } from "@/components/cookie-consent/cookie-consent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -167,7 +169,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <SessionProvider session={session}>{children}</SessionProvider>
+        <SessionProvider session={session}>
+          <ReCaptchaProvider>
+            {children}
+            <CookieConsentBanner />
+          </ReCaptchaProvider>
+        </SessionProvider>
         <Toaster position="bottom-right" richColors />
       </body>
     </html>

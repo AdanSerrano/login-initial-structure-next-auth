@@ -51,4 +51,10 @@ export const createRegisterFormSchema = z
 
 export type RegisterUser = z.infer<typeof createRegisterFormSchema>;
 
+export const registerActionSchema = createRegisterFormSchema.extend({
+  recaptchaToken: z.string().optional(),
+});
+
+export type RegisterActionInput = z.infer<typeof registerActionSchema>;
+
 export { calculatePasswordStrength };

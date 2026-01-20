@@ -123,3 +123,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* reCAPTCHA badge - oculto por defecto, visible solo con clase .show-recaptcha-badge */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease;
+}
+
+.show-recaptcha-badge .grecaptcha-badge {
+  visibility: visible !important;
+  opacity: 1 !important;
+}

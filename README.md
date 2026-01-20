@@ -16,13 +16,26 @@ Sistema de autenticación completo con arquitectura limpia, diseñado para ser e
 
 ## Funcionalidades
 
+### Autenticación
 - Registro de usuarios con verificación por email
 - Login con credenciales (email o nombre de usuario)
+- Magic Link (login sin contraseña vía email)
+- Autenticación de dos factores (2FA) por email
 - Recuperación de contraseña
 - Rate limiting para protección contra fuerza bruta
 - Indicador de fortaleza de contraseña
+
+### Seguridad
+- **Google reCAPTCHA v3** - Protección invisible contra bots en login, registro y magic link
+- **Cookies GDPR** - Banner de consentimiento de cookies con preferencias personalizables:
+  - Cookies necesarias (siempre activas)
+  - Cookies analíticas (opcional)
+  - Cookies funcionales (opcional)
+
+### UI/UX
 - Diseño responsive (mobile-first)
 - Tema claro/oscuro
+- Skeleton loaders para mejor experiencia de carga
 
 ## Inicio Rápido
 
@@ -68,6 +81,12 @@ RESEND_FROM_EMAIL=
 
 # URL pública de la aplicación (sin slash al final)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Google reCAPTCHA v3 - Protección contra bots
+# Obtener en: https://www.google.com/recaptcha/admin/create
+# Seleccionar "reCAPTCHA v3" y agregar tu dominio (localhost para desarrollo)
+NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
+RECAPTCHA_SECRET_KEY=
 ```
 
 ### Base de Datos
@@ -126,13 +145,17 @@ Cada capa tiene una responsabilidad única y solo puede comunicarse con la capa 
 
 | Módulo | Descripción |
 |--------|-------------|
-| `login` | Autenticación con email/username |
-| `register` | Registro de usuarios |
+| `login` | Autenticación con email/username + reCAPTCHA |
+| `register` | Registro de usuarios + reCAPTCHA |
+| `magic-link` | Login sin contraseña vía email + reCAPTCHA |
+| `two-factor` | Autenticación de dos factores (2FA) |
 | `register-success` | Página de éxito post-registro |
 | `verify-email` | Verificación de email |
 | `resend-verification` | Reenvío de email de verificación |
 | `forgot-password` | Solicitud de reset de contraseña |
 | `reset-password` | Cambio de contraseña |
+| `logout` | Cierre de sesión |
+| `settings/security` | Configuración de seguridad del usuario |
 | `services` | Dashboard de usuario autenticado |
 
 ## Comandos
@@ -151,14 +174,32 @@ bunx prisma db push      # Push schema
 bunx prisma migrate dev  # Migraciones
 ```
 
+## Componentes de Seguridad
+
+### reCAPTCHA v3
+Protección invisible contra bots integrada en:
+- Formulario de login
+- Formulario de registro
+- Solicitud de magic link
+
+El badge de reCAPTCHA solo se muestra en la página de login para indicar la protección.
+
+### Cookie Consent (GDPR)
+Banner de consentimiento que aparece en la primera visita:
+- No se puede cerrar sin seleccionar una opción
+- Guarda preferencias por 365 días
+- Permite configurar cookies analíticas y funcionales
+- Cookies necesarias siempre activas (requeridas para seguridad)
+
 ## Documentación
 
 - [Auth.js](https://authjs.dev/) - Documentación de autenticación
 - [Prisma](https://www.prisma.io/docs) - Documentación de ORM
 - [shadcn/ui](https://ui.shadcn.com/) - Componentes UI
 - [Resend](https://resend.com/docs) - Envío de emails
-- [ReactEmail](https://react.email/) - Componentes de react email
+- [React Email](https://react.email/) - Componentes de react email
 - [Zustand](https://zustand-demo.pmnd.rs/) - Manejador de estados
+- [Google reCAPTCHA](https://developers.google.com/recaptcha/docs/v3) - Protección contra bots
 
 ## Licencia
 

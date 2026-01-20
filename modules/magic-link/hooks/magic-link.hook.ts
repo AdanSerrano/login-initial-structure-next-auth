@@ -4,6 +4,7 @@ import { requestMagicLinkAction } from "../actions/magic-link.actions";
 import {
   requestMagicLinkSchema,
   RequestMagicLinkInput,
+  RequestMagicLinkActionInput,
 } from "../validations/schema/magic-link.schema";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,11 +13,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useReCaptcha } from "@/hooks/use-recaptcha";
 
 export const useRequestMagicLink = () => {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { getToken: getReCaptchaToken, isConfigured: isReCaptchaConfigured } = useReCaptcha();
 
   const form = useForm<RequestMagicLinkInput>({
     resolver: zodResolver(requestMagicLinkSchema),
@@ -31,7 +34,21 @@ export const useRequestMagicLink = () => {
 
     startTransition(async () => {
       try {
-        const result = await requestMagicLinkAction(values);
+        const recaptchaToken = await getReCaptchaToken("magic_link");
+
+        // Si reCAPTCHA está configurado pero no se pudo obtener el token, fallar
+        if (isReCaptchaConfigured && !recaptchaToken) {
+          setError("Error de verificación de seguridad. Intenta de nuevo.");
+          toast.error("Error de verificación de seguridad. Intenta de nuevo.");
+          return;
+        }
+
+        const actionInput: RequestMagicLinkActionInput = {
+          ...values,
+          recaptchaToken: recaptchaToken || undefined,
+        };
+
+        const result = await requestMagicLinkAction(actionInput);
 
         if (result.error) {
           setError(result.error);
@@ -51,7 +68,7 @@ export const useRequestMagicLink = () => {
         toast.error(errorMessage);
       }
     });
-  }, [form]);
+  }, [form, getReCaptchaToken, isReCaptchaConfigured]);
 
   return {
     requestMagicLink,

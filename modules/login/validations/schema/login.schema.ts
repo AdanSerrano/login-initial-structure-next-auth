@@ -26,3 +26,9 @@ export const createLoginFormSchema = z.object({
 });
 
 export type LoginUser = z.infer<typeof createLoginFormSchema>;
+
+export const loginActionSchema = createLoginFormSchema.extend({
+  recaptchaToken: z.string().optional(),
+});
+
+export type LoginActionInput = z.infer<typeof loginActionSchema>;
