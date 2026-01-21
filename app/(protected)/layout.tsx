@@ -1,0 +1,37 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header-new";
+import { cookies } from "next/headers";
+
+export default async function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
+
+  return (
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <AppSidebar
+        user={{
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image,
+        }}
+      />
+      <SidebarInset>
+        <DashboardHeader />
+        <main className="flex-1">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

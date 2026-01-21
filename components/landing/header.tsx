@@ -8,13 +8,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { KeyRound, ArrowRight, User, Settings, LogOut, Shield } from "lucide-react";
-import { auth } from "@/auth";
+import { KeyRound, ArrowRight, User, Settings, Shield } from "lucide-react";
 import { LogoutButton } from "./logout-button";
+import { currentUser } from "@/lib/user";
 
 export async function Header() {
-  const session = await auth();
-  const user = session?.user;
+  const user = await currentUser();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
@@ -45,6 +44,14 @@ export async function Header() {
           >
             Beneficios
           </Link>
+          {user && (
+            <Link
+              href="/services"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Dashboard
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">

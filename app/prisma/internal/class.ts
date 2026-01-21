@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.2.0",
-  "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
+  "clientVersion": "7.3.0",
+  "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
   "activeProvider": "postgresql",
   "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../app/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nenum Role {\n  USER\n  ADMIN\n}\n\nmodel User {\n  id                    String                 @id @default(cuid())\n  userName              String?                @unique\n  name                  String?\n  email                 String?                @unique\n  emailVerified         DateTime?\n  image                 String?\n  password              String?\n  role                  Role                   @default(USER)\n  isTwoFactorEnabled    Boolean                @default(false)\n  failedLoginAttempts   Int                    @default(0)\n  lockedUntil           DateTime?\n  lastFailedLogin       DateTime?\n  // Bloqueo administrativo\n  isBlocked             Boolean                @default(false)\n  blockedAt             DateTime?\n  blockedReason         String?\n  blockedServices       String[]               @default([])\n  // Eliminación suave (soft delete)\n  deletedAt             DateTime?\n  scheduledDeletionDate DateTime?\n  deletionReason        String?\n  createdAt             DateTime               @default(now())\n  updatedAt             DateTime               @updatedAt\n  twoFactorConfirmation twoFactorConfirmation?\n  auditLogs             AuditLog[]\n  sessions              Session[]\n}\n\nmodel VerificationToken {\n  id      String   @id @default(cuid())\n  email   String\n  token   String   @unique\n  expires DateTime\n\n  @@unique([email, token])\n}\n\nmodel PasswordResetToken {\n  id      String   @id @default(cuid())\n  email   String\n  token   String   @unique\n  expires DateTime\n\n  @@unique([email, token])\n}\n\nmodel TwoFactorToken {\n  id      String   @id @default(cuid())\n  email   String\n  token   String   @unique\n  expires DateTime\n\n  @@unique([email, token])\n}\n\nmodel MagicLinkToken {\n  id      String   @id @default(cuid())\n  email   String\n  token   String   @unique\n  expires DateTime\n\n  @@unique([email, token])\n}\n\nmodel twoFactorConfirmation {\n  id     String @id @default(cuid())\n  userId String\n  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([userId])\n  @@index([userId])\n}\n\nenum AuditAction {\n  LOGIN_SUCCESS\n  LOGIN_FAILED\n  LOGOUT\n  PASSWORD_RESET_REQUESTED\n  PASSWORD_RESET_COMPLETED\n  EMAIL_VERIFIED\n  TWO_FACTOR_ENABLED\n  TWO_FACTOR_DISABLED\n  TWO_FACTOR_VERIFIED\n  ACCOUNT_LOCKED\n  ACCOUNT_UNLOCKED\n  REGISTRATION\n  USER_BLOCKED\n  USER_UNBLOCKED\n  SERVICE_BLOCKED\n  SERVICE_UNBLOCKED\n  ACCOUNT_DELETION_REQUESTED\n  ACCOUNT_DELETION_CANCELLED\n  ACCOUNT_DELETED_PERMANENTLY\n  MAGIC_LINK_REQUESTED\n  MAGIC_LINK_LOGIN\n}\n\nmodel AuditLog {\n  id        String      @id @default(cuid())\n  userId    String?\n  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)\n  action    AuditAction\n  ipAddress String?\n  userAgent String?\n  metadata  Json?\n  createdAt DateTime    @default(now())\n\n  @@index([userId])\n  @@index([action])\n  @@index([createdAt])\n}\n\nmodel Session {\n  id         String   @id @default(cuid())\n  userId     String\n  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n  token      String   @unique\n  deviceType String?\n  browser    String?\n  os         String?\n  ipAddress  String?\n  lastActive DateTime @default(now())\n  createdAt  DateTime @default(now())\n\n  @@index([userId])\n  @@index([token])\n  @@index([lastActive])\n}\n",
   "runtimeDataModel": {
@@ -37,12 +37,14 @@ async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Modul
 }
 
 config.compilerWasm = {
-  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_bg.postgresql.mjs"),
+  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.mjs"),
 
   getQueryCompilerWasmModule: async () => {
-    const { wasm } = await import("@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.mjs")
+    const { wasm } = await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.wasm-base64.mjs")
     return await decodeBase64AsWasm(wasm)
-  }
+  },
+
+  importName: "./query_compiler_fast_bg.js"
 }
 
 

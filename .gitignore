@@ -45,4 +45,4 @@ bun.lock
 package-lock.json
 
 CLAUDE.md
-
+.claude/*

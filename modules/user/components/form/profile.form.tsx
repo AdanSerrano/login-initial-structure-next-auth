@@ -124,20 +124,6 @@ export const ProfileForm = memo(function ProfileForm({
           />
         </div>
 
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Correo electrónico</p>
-              <p className="text-sm text-muted-foreground">
-                {defaultValues?.email || "No configurado"}
-              </p>
-            </div>
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-              Ir a pestaña Email para cambiar
-            </span>
-          </div>
-        </div>
-
         {error && (
           <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
             {error}
