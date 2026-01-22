@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
   Settings,
@@ -78,13 +77,13 @@ interface AppSidebarProps {
     name?: string | null;
     email?: string | null;
     image?: string | null;
+    role?: Role | null;
   };
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.role === Role.ADMIN;
+  const isAdmin = user.role === Role.ADMIN;
 
   return (
     <Sidebar collapsible="icon">

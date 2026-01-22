@@ -11,13 +11,13 @@ export async function CtaButtons() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
         <Button size="lg" asChild>
-          <Link href="/services">
+          <Link href="/dashboard/services">
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Ir al panel
           </Link>
         </Button>
         <Button variant="outline" size="lg" asChild>
-          <Link href="/settings/profile">
+          <Link href="/dashboard/settings/profile">
             <Settings className="mr-2 h-4 w-4" />
             Configuración
           </Link>
@@ -55,7 +55,7 @@ export async function BenefitsButton() {
   if (isLoggedIn) {
     return (
       <Button asChild>
-        <Link href="/services">
+        <Link href="/dashboard/services">
           <LayoutDashboard className="mr-2 h-4 w-4" />
           Ir al panel
         </Link>

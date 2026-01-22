@@ -11,7 +11,7 @@ export async function HeroButtons() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
         <Button size="lg" asChild>
-          <Link href="/services">
+          <Link href="/dashboard/services">
             <LayoutDashboard className="mr-2 h-4 w-4" />
             Ir al panel
             <ArrowRight className="ml-2 h-4 w-4" />
