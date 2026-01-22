@@ -99,6 +99,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       }
 
+      if (token.sub && !user) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            role: true,
+            name: true,
+            email: true,
+            image: true,
+            userName: true,
+            isTwoFactorEnabled: true,
+            isBlocked: true,
+            deletedAt: true,
+          },
+        });
+
+        if (dbUser) {
+          if (dbUser.isBlocked || dbUser.deletedAt) {
+            token.sessionRevoked = true;
+            return token;
+          }
+          token.role = dbUser.role;
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+          token.image = dbUser.image;
+          token.userName = dbUser.userName ?? undefined;
+          token.isTwoFactorEnabled = dbUser.isTwoFactorEnabled;
+        }
+      }
+
       if (trigger === "update") {
         if (session?.user) {
           if (session.user.name !== undefined) token.name = session.user.name;
