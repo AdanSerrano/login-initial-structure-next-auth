@@ -41,19 +41,19 @@ export async function DashboardHeader() {
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/services">
+            <Link href="/dashboard/services">
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Panel
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/settings/profile">
+            <Link href="/dashboard/settings/profile">
               <Settings className="mr-2 h-4 w-4" />
               Configuración
             </Link>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/settings/security">
+            <Link href="/dashboard/settings/security">
               <Shield className="mr-2 h-4 w-4" />
               Seguridad
             </Link>
@@ -86,19 +86,19 @@ export async function DashboardHeader() {
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/services" className="cursor-pointer">
+                  <Link href="/dashboard/services" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Mi cuenta
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings/profile" className="cursor-pointer">
+                  <Link href="/dashboard/settings/profile" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     Configuración
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings/security" className="cursor-pointer">
+                  <Link href="/dashboard/settings/security" className="cursor-pointer">
                     <Shield className="mr-2 h-4 w-4" />
                     Seguridad
                   </Link>

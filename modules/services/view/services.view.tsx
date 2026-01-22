@@ -38,21 +38,21 @@ export async function ServicesView() {
       <QuickStatsCard user={user} />
       <SecurityStatusCard user={user} />
       <QuickActionCard
-        href="/settings/profile"
+        href="/dashboard/settings/profile"
         icon={<Settings className="h-5 w-5" />}
         title="Configuración"
         description="Edita tu perfil y preferencias de cuenta"
         color="blue"
       />
       <QuickActionCard
-        href="/settings/security"
+        href="/dashboard/settings/security"
         icon={<Shield className="h-5 w-5" />}
         title="Seguridad"
         description="2FA y gestión de sesiones activas"
         color="green"
       />
       <QuickActionCard
-        href="/settings/profile"
+        href="/dashboard/settings/profile"
         icon={<KeyRound className="h-5 w-5" />}
         title="Contraseña"
         description="Actualiza tu contraseña de acceso"
@@ -192,7 +192,7 @@ const SecurityStatusCard = memo(function SecurityStatusCard({
         </div>
         {!is2FAEnabled && (
           <Link
-            href="/settings/security"
+            href="/dashboard/settings/security"
             className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-primary/10 px-4 py-2.5 sm:py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
             Activar 2FA

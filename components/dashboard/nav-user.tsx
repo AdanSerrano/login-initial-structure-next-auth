@@ -118,19 +118,19 @@ export function NavUser({ user }: NavUserProps) {
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
-                  <Link href="/services" className="cursor-pointer">
+                  <Link href="/dashboard/services" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Mi cuenta
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings/profile" className="cursor-pointer">
+                  <Link href="/dashboard/settings/profile" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     Configuración
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings/security" className="cursor-pointer">
+                  <Link href="/dashboard/settings/security" className="cursor-pointer">
                     <Shield className="mr-2 h-4 w-4" />
                     Seguridad
                   </Link>
