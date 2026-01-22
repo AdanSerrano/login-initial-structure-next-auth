@@ -10,6 +10,8 @@ import type {
   DeleteUserParams,
   BulkBlockParams,
   BulkDeleteParams,
+  RestoreUserParams,
+  BulkRestoreParams,
 } from "../types/admin-users.types";
 
 export class AdminUsersService {
@@ -127,7 +129,7 @@ export class AdminUsersService {
 
   public async deleteUser(params: DeleteUserParams): Promise<AdminUsersActionResult> {
     try {
-      const { userId, currentUserId } = params;
+      const { userId, currentUserId, reason } = params;
 
       const user = await this.repository.getUserById(userId);
       const validation = this.domainService.validateDeleteUser(
@@ -140,7 +142,7 @@ export class AdminUsersService {
         return { error: validation.error };
       }
 
-      await this.repository.softDeleteUser(userId);
+      await this.repository.softDeleteUser(userId, reason);
 
       return { success: "Usuario eliminado correctamente" };
     } catch (error) {
@@ -178,6 +180,57 @@ export class AdminUsersService {
 
   public async bulkDeleteUsers(params: BulkDeleteParams): Promise<AdminUsersActionResult> {
     try {
+      const { userIds, currentUserId, reason } = params;
+
+      const validation = this.domainService.validateBulkAction(
+        userIds,
+        currentUserId
+      );
+
+      if (!validation.isValid) {
+        return { error: validation.error };
+      }
+
+      const filteredIds = this.domainService.filterCurrentUserFromBulkAction(
+        userIds,
+        currentUserId
+      );
+
+      const count = await this.repository.bulkDeleteUsers(filteredIds, reason);
+
+      return { success: `${count} usuarios eliminados correctamente` };
+    } catch (error) {
+      console.error("Error bulk deleting users:", error);
+      return { error: "Error al eliminar usuarios" };
+    }
+  }
+
+  public async restoreUser(params: RestoreUserParams): Promise<AdminUsersActionResult> {
+    try {
+      const { userId, currentUserId } = params;
+
+      const user = await this.repository.getUserById(userId);
+      const validation = this.domainService.validateRestoreUser(
+        userId,
+        currentUserId,
+        user
+      );
+
+      if (!validation.isValid) {
+        return { error: validation.error };
+      }
+
+      await this.repository.restoreUser(userId);
+
+      return { success: "Usuario restaurado correctamente" };
+    } catch (error) {
+      console.error("Error restoring user:", error);
+      return { error: "Error al restaurar usuario" };
+    }
+  }
+
+  public async bulkRestoreUsers(params: BulkRestoreParams): Promise<AdminUsersActionResult> {
+    try {
       const { userIds, currentUserId } = params;
 
       const validation = this.domainService.validateBulkAction(
@@ -194,12 +247,12 @@ export class AdminUsersService {
         currentUserId
       );
 
-      const count = await this.repository.bulkDeleteUsers(filteredIds);
+      const count = await this.repository.bulkRestoreUsers(filteredIds);
 
-      return { success: `${count} usuarios eliminados correctamente` };
+      return { success: `${count} usuarios restaurados correctamente` };
     } catch (error) {
-      console.error("Error bulk deleting users:", error);
-      return { error: "Error al eliminar usuarios" };
+      console.error("Error bulk restoring users:", error);
+      return { error: "Error al restaurar usuarios" };
     }
   }
 }

@@ -45,6 +45,7 @@ export type AdminUsersDialogType =
   | "unblock"
   | "change-role"
   | "delete"
+  | "restore"
   | null;
 
 export interface AdminUsersPagination {
@@ -102,6 +103,7 @@ export interface ChangeRoleParams {
 
 export interface DeleteUserParams {
   userId: string;
+  reason: string;
   currentUserId: string;
 }
 
@@ -112,6 +114,17 @@ export interface BulkBlockParams {
 }
 
 export interface BulkDeleteParams {
+  userIds: string[];
+  reason?: string;
+  currentUserId: string;
+}
+
+export interface RestoreUserParams {
+  userId: string;
+  currentUserId: string;
+}
+
+export interface BulkRestoreParams {
   userIds: string[];
   currentUserId: string;
 }

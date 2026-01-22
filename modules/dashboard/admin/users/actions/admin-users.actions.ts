@@ -11,6 +11,8 @@ import {
   deleteUserSchema,
   bulkBlockSchema,
   bulkDeleteSchema,
+  restoreUserSchema,
+  bulkRestoreSchema,
 } from "../validations/schema/admin-users.schema";
 import type {
   GetUsersParams,
@@ -115,7 +117,8 @@ export async function changeRoleAction(
 }
 
 export async function deleteUserAction(
-  userId: string
+  userId: string,
+  reason: string
 ): Promise<AdminUsersActionResult> {
   const accessValidation = await validateAdminAccess();
   if (!accessValidation.isValid || !accessValidation.userId) {
@@ -124,6 +127,7 @@ export async function deleteUserAction(
 
   const inputValidation = deleteUserSchema.safeParse({
     userId,
+    reason,
     currentUserId: accessValidation.userId,
   });
   if (!inputValidation.success) {
@@ -171,4 +175,42 @@ export async function bulkDeleteUsersAction(
   }
 
   return await controller.bulkDeleteUsers(inputValidation.data);
+}
+
+export async function restoreUserAction(
+  userId: string
+): Promise<AdminUsersActionResult> {
+  const accessValidation = await validateAdminAccess();
+  if (!accessValidation.isValid || !accessValidation.userId) {
+    return { error: accessValidation.error };
+  }
+
+  const inputValidation = restoreUserSchema.safeParse({
+    userId,
+    currentUserId: accessValidation.userId,
+  });
+  if (!inputValidation.success) {
+    return { error: inputValidation.error.issues[0]?.message || "Datos inválidos" };
+  }
+
+  return await controller.restoreUser(inputValidation.data);
+}
+
+export async function bulkRestoreUsersAction(
+  userIds: string[]
+): Promise<AdminUsersActionResult> {
+  const accessValidation = await validateAdminAccess();
+  if (!accessValidation.isValid || !accessValidation.userId) {
+    return { error: accessValidation.error };
+  }
+
+  const inputValidation = bulkRestoreSchema.safeParse({
+    userIds,
+    currentUserId: accessValidation.userId,
+  });
+  if (!inputValidation.success) {
+    return { error: inputValidation.error.issues[0]?.message || "Datos inválidos" };
+  }
+
+  return await controller.bulkRestoreUsers(inputValidation.data);
 }

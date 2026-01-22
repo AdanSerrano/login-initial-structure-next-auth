@@ -41,8 +41,10 @@ const memoryRateLimit = new Map<string, { count: number; resetTime: number }>();
 
 const RATE_LIMIT_CONFIG = {
   general: { maxRequests: 100, windowMs: 60 * 1000 },
-  auth: { maxRequests: 10, windowMs: 60 * 1000 },
+  // Auth routes (password reset, verification, etc.) - moderado
+  auth: { maxRequests: 30, windowMs: 60 * 1000 },
   api: { maxRequests: 60, windowMs: 60 * 1000 },
+  // Login real (credentials) - estricto para prevenir brute force
   login: { maxRequests: 5, windowMs: 15 * 60 * 1000 },
 };
 
@@ -478,11 +480,24 @@ export const proxy = NextAuth(authConfig).auth(async (req) => {
   // ========================================================================
 
   // Determinar tipo de rate limit
+  // IMPORTANTE: /api/auth/session y /api/auth/providers son llamados automáticamente
+  // por NextAuth en cada navegación, no son intentos de login reales.
+  // Usamos "general" para estos endpoints para evitar falsos positivos.
+  const isSessionOrProvidersCheck =
+    pathname === "/api/auth/session" ||
+    pathname === "/api/auth/providers" ||
+    pathname === "/api/auth/csrf";
+
   let rateLimitType: RateLimitType = "general";
-  if (isAuthRoute(pathname) || isApiAuthRoute(pathname)) {
-    rateLimitType = "auth";
-  } else if (pathname === "/login" || pathname === "/api/auth/signin") {
+  if (isSessionOrProvidersCheck) {
+    // Session checks son frecuentes pero no representan riesgo de seguridad
+    rateLimitType = "general";
+  } else if (pathname === "/login" || pathname === "/api/auth/signin" || pathname === "/api/auth/callback/credentials") {
+    // Intentos de login reales - más estricto
     rateLimitType = "login";
+  } else if (isAuthRoute(pathname) || isApiAuthRoute(pathname)) {
+    // Otras rutas de autenticación
+    rateLimitType = "auth";
   } else if (isApiRoute(pathname)) {
     rateLimitType = "api";
   }

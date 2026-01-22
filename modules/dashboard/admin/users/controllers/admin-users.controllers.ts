@@ -7,6 +7,8 @@ import type {
   DeleteUserParams,
   BulkBlockParams,
   BulkDeleteParams,
+  RestoreUserParams,
+  BulkRestoreParams,
   AdminUsersActionResult,
 } from "../types/admin-users.types";
 
@@ -57,5 +59,17 @@ export class AdminUsersController {
     params: BulkDeleteParams
   ): Promise<AdminUsersActionResult> {
     return await this.service.bulkDeleteUsers(params);
+  }
+
+  public async restoreUser(
+    params: RestoreUserParams
+  ): Promise<AdminUsersActionResult> {
+    return await this.service.restoreUser(params);
+  }
+
+  public async bulkRestoreUsers(
+    params: BulkRestoreParams
+  ): Promise<AdminUsersActionResult> {
+    return await this.service.bulkRestoreUsers(params);
   }
 }

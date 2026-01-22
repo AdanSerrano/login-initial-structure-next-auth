@@ -22,9 +22,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async signIn({ user }) {
-      // Verificar que el email esté verificado (solo auth local)
       const existingUser = await db.user.findUnique({ where: { id: user.id } });
-      if (!existingUser?.emailVerified) return false;
+
+      if (!existingUser) return false;
+
+      // Verificar que el email esté verificado
+      if (!existingUser.emailVerified) return false;
+
+      // Si el usuario está bloqueado por un admin, no permitir acceso
+      if (existingUser.isBlocked) return false;
+
+      // Si el usuario está eliminado, verificar período de gracia (30 días)
+      if (existingUser.deletedAt) {
+        const GRACE_PERIOD_DAYS = 30;
+        const gracePeriodMs = GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+        const deletedTime = new Date(existingUser.deletedAt).getTime();
+        const now = Date.now();
+
+        // Si está dentro del período de gracia, restaurar la cuenta
+        if (now - deletedTime < gracePeriodMs) {
+          await db.user.update({
+            where: { id: user.id },
+            data: { deletedAt: null },
+          });
+          return true;
+        }
+
+        // Si pasó el período de gracia, no permitir acceso
+        return false;
+      }
+
       return true;
     },
     async session({ token, session }) {

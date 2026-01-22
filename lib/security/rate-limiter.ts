@@ -68,9 +68,9 @@ export const RATE_LIMIT_CONFIGS: Record<RateLimitType, RateLimitConfig> = {
     message: "Demasiadas solicitudes. Por favor, espera un momento.",
   },
 
-  // Rutas de autenticación (más estricto)
+  // Rutas de autenticación (moderado - password reset, verification, etc.)
   auth: {
-    maxRequests: 10,
+    maxRequests: 30,
     windowMs: 60 * 1000, // 1 minuto
     message: "Demasiados intentos de autenticación. Espera antes de reintentar.",
   },

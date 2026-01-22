@@ -17,6 +17,7 @@ import {
   unblockUserAction,
   changeRoleAction,
   deleteUserAction,
+  restoreUserAction,
   bulkBlockUsersAction,
   bulkDeleteUsersAction,
 } from "../actions/admin-users.actions";
@@ -28,6 +29,7 @@ import {
   BlockUserDialog,
   ChangeRoleDialog,
   DeleteUserDialog,
+  RestoreUserDialog,
 } from "../components/dialogs";
 
 import type { Role } from "@/app/prisma/enums";
@@ -52,7 +54,9 @@ import type {
   SortingConfig,
   PaginationConfig,
   SelectionConfig,
+  ExpansionConfig,
 } from "@/components/custom-datatable";
+import { UserExpandedContent } from "../components/expanded";
 
 // Constantes de configuración
 const STYLE_CONFIG: StyleConfig = {
@@ -443,10 +447,28 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
   );
 
   const deleteUser = useCallback(
+    (userId: string, reason: string) => {
+      startTransition(async () => {
+        adminUsersState.setPending(true);
+        const result = await deleteUserAction(userId, reason);
+        if (result.error) {
+          toast.error(result.error);
+        } else if (result.success) {
+          toast.success(result.success);
+          adminUsersState.closeDialog();
+          fetchUsers(urlState);
+        }
+        adminUsersState.setPending(false);
+      });
+    },
+    [fetchUsers, urlState]
+  );
+
+  const restoreUser = useCallback(
     (userId: string) => {
       startTransition(async () => {
         adminUsersState.setPending(true);
-        const result = await deleteUserAction(userId);
+        const result = await restoreUserAction(userId);
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
@@ -563,7 +585,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       globalFilter: urlState.search,
       onGlobalFilterChange: handleSearchChange,
       placeholder: "Buscar por nombre, email o usuario...",
-      debounceMs: 300,
+      debounceMs: 700,
       showClearButton: true,
     }),
     [urlState.search, handleSearchChange]
@@ -603,6 +625,22 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       includeHeaders: true,
     }),
     []
+  );
+
+  const renderExpandedContent = useCallback(
+    (user: AdminUser) => <UserExpandedContent user={user} />,
+    []
+  );
+
+  const expansionConfig: ExpansionConfig<AdminUser> = useMemo(
+    () => ({
+      enabled: true,
+      expandedRows: state.expandedRows,
+      onExpansionChange: adminUsersState.setExpandedRows.bind(adminUsersState),
+      renderContent: renderExpandedContent,
+      expandOnClick: false,
+    }),
+    [state.expandedRows, renderExpandedContent]
   );
 
   const selectedCount = useMemo(
@@ -661,6 +699,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
             columns={columns}
             getRowId={getRowId}
             selection={selectionConfig}
+            expansion={expansionConfig}
             pagination={paginationConfig}
             sorting={sortingConfig}
             filter={filterConfig}
@@ -708,6 +747,14 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
         isPending={isPending || state.isPending}
         onClose={adminUsersState.closeDialog.bind(adminUsersState)}
         onDelete={deleteUser}
+      />
+
+      <RestoreUserDialog
+        user={state.selectedUser}
+        open={state.activeDialog === "restore"}
+        isPending={isPending || state.isPending}
+        onClose={adminUsersState.closeDialog.bind(adminUsersState)}
+        onRestore={restoreUser}
       />
     </div>
   );

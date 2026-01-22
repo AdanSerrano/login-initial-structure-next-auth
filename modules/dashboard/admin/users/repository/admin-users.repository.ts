@@ -199,14 +199,36 @@ export class AdminUsersRepository {
     return user as AdminUser;
   }
 
-  public async softDeleteUser(id: string): Promise<AdminUser | null> {
+  public async softDeleteUser(
+    id: string,
+    reason?: string
+  ): Promise<AdminUser | null> {
+    // Soft delete: establece deletedAt Y bloquea al usuario
+    // El usuario tiene un período de gracia de 30 días para reactivar su cuenta
+    // También se bloquea para que no pueda acceder durante ese tiempo
     const user = await db.user.update({
       where: { id },
       data: {
         deletedAt: new Date(),
         isBlocked: true,
         blockedAt: new Date(),
-        blockedReason: "Usuario eliminado",
+        blockedReason: reason || "Cuenta eliminada por administrador",
+      },
+      select: userSelectFields,
+    });
+
+    return user as AdminUser;
+  }
+
+  public async restoreUser(id: string): Promise<AdminUser | null> {
+    // Restaurar usuario eliminado: limpiar deletedAt Y desbloquear
+    const user = await db.user.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        isBlocked: false,
+        blockedAt: null,
+        blockedReason: null,
       },
       select: userSelectFields,
     });
@@ -230,14 +252,30 @@ export class AdminUsersRepository {
     return result.count;
   }
 
-  public async bulkDeleteUsers(ids: string[]): Promise<number> {
+  public async bulkDeleteUsers(ids: string[], reason?: string): Promise<number> {
+    // Soft delete masivo: establece deletedAt Y bloquea
     const result = await db.user.updateMany({
       where: { id: { in: ids } },
       data: {
         deletedAt: new Date(),
         isBlocked: true,
         blockedAt: new Date(),
-        blockedReason: "Usuario eliminado",
+        blockedReason: reason || "Cuenta eliminada por administrador",
+      },
+    });
+
+    return result.count;
+  }
+
+  public async bulkRestoreUsers(ids: string[]): Promise<number> {
+    // Restaurar masivo: limpiar deletedAt Y desbloquear
+    const result = await db.user.updateMany({
+      where: { id: { in: ids } },
+      data: {
+        deletedAt: null,
+        isBlocked: false,
+        blockedAt: null,
+        blockedReason: null,
       },
     });
 

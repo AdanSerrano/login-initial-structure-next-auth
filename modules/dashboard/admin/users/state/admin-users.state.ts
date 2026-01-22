@@ -18,6 +18,7 @@ interface AdminUsersStateData {
 
   filters: AdminUsersFilters;
   rowSelection: Record<string, boolean>;
+  expandedRows: Record<string, boolean>;
   sorting: AdminUsersSorting[];
   columnVisibility: AdminUsersColumnVisibility;
   pagination: AdminUsersPagination;
@@ -49,6 +50,7 @@ const initialState: AdminUsersStateData = {
 
   filters: initialFilters,
   rowSelection: {},
+  expandedRows: {},
   sorting: [{ id: "createdAt", desc: true }],
   columnVisibility: {},
   pagination: initialPagination,
@@ -184,6 +186,11 @@ export class AdminUsersState {
 
   public setRowSelection(rowSelection: Record<string, boolean>): void {
     this.state = { ...this.state, rowSelection };
+    this.notify();
+  }
+
+  public setExpandedRows(expandedRows: Record<string, boolean>): void {
+    this.state = { ...this.state, expandedRows };
     this.notify();
   }
 

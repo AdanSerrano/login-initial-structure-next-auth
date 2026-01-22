@@ -103,6 +103,26 @@ export class AdminUsersDomainService {
     return { isValid: true };
   }
 
+  public validateRestoreUser(
+    userId: string,
+    currentUserId: string,
+    user: AdminUser | null
+  ): DomainValidationResult {
+    if (userId === currentUserId) {
+      return { isValid: false, error: "No puedes restaurarte a ti mismo" };
+    }
+
+    if (!user) {
+      return { isValid: false, error: "Usuario no encontrado" };
+    }
+
+    if (!user.deletedAt) {
+      return { isValid: false, error: "El usuario no está eliminado" };
+    }
+
+    return { isValid: true };
+  }
+
   public filterCurrentUserFromBulkAction(
     userIds: string[],
     currentUserId: string

@@ -112,6 +112,7 @@ const SearchInput = memo(function SearchInput({
   placeholder,
   onChange,
   onClear,
+  onSubmit,
   showClearButton,
 }: {
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -119,8 +120,19 @@ const SearchInput = memo(function SearchInput({
   placeholder: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
+  onSubmit: () => void;
   showClearButton: boolean;
 }) {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onSubmit();
+      }
+    },
+    [onSubmit]
+  );
+
   return (
     <div className="relative w-full sm:max-w-xs">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -129,6 +141,7 @@ const SearchInput = memo(function SearchInput({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        onKeyDown={handleKeyDown}
         className="pl-9 pr-9"
       />
       {value && showClearButton && (
@@ -428,6 +441,15 @@ function TableToolbarInner<TData>({
     inputRef.current?.focus();
   }, []);
 
+  // Submit filter immediately (on Enter key) - clears debounce
+  const handleSubmitFilter = useCallback(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    filterRef.current?.onGlobalFilterChange?.(localFilter);
+  }, [localFilter]);
+
   // Export handler - stable callback using refs
   const handleExport = useCallback((format: ExportFormat) => {
     onExportRef.current?.(format);
@@ -530,6 +552,7 @@ function TableToolbarInner<TData>({
               placeholder={searchPlaceholder}
               onChange={handleFilterChange}
               onClear={handleClearFilter}
+              onSubmit={handleSubmitFilter}
               showClearButton={showClearButton}
             />
           )}
