@@ -1,18 +1,15 @@
 "use client";
 
-import { memo, useSyncExternalStore, useCallback, useMemo, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { RefreshCw, Package, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { CustomDataTable, useSafeTransition } from "@/components/custom-datatable";
+import { CustomDataTable } from "@/components/custom-datatable";
 import { AnimatedSection } from "@/components/ui/animated-section";
 
-import { demoTableState } from "../state/demo-table.state";
 import {
-  getProductsAction,
-  getStatsAction,
   deleteProductAction,
   bulkDeleteProductsAction,
   updateProductStatusAction,
@@ -30,6 +27,7 @@ import type {
   DemoTableSorting,
   ProductStatus,
   ProductCategory,
+  DialogType,
 } from "../types/demo-table.types";
 import type {
   StyleConfig,
@@ -94,10 +92,10 @@ interface DemoTableClientProps {
 }
 
 const DemoTableHeader = memo(function DemoTableHeader({
-  isPending,
+  isNavigating,
   onRefresh,
 }: {
-  isPending: boolean;
+  isNavigating: boolean;
   onRefresh: () => void;
 }) {
   return (
@@ -106,12 +104,12 @@ const DemoTableHeader = memo(function DemoTableHeader({
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Demo DataTable</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Demostración de CustomDataTable con todas las funcionalidades disponibles.
+            Demostración de CustomDataTable con Server Components.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isPending}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isPending ? "animate-spin" : ""}`} />
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={isNavigating}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isNavigating ? "animate-spin" : ""}`} />
             Actualizar
           </Button>
         </div>
@@ -121,31 +119,23 @@ const DemoTableHeader = memo(function DemoTableHeader({
 });
 
 export function DemoTableClient({ initialData }: DemoTableClientProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isPending, safeTransition } = useSafeTransition();
 
-  // Inicializar el state global con los datos del servidor (solo una vez)
-  const isInitializedRef = useRef(false);
-  if (!isInitializedRef.current) {
-    demoTableState.setProducts(initialData.products);
-    demoTableState.setPagination(initialData.pagination);
-    if (initialData.stats) {
-      demoTableState.setStats(initialData.stats);
-    }
-    demoTableState.setFilters(initialData.filters);
-    demoTableState.setInitialized(true);
-    isInitializedRef.current = true;
-  }
+  // Estado de UI local (no datos del servidor)
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [activeDialog, setActiveDialog] = useState<DialogType>(null);
+  const [selectedProduct, setSelectedProduct] = useState<DemoProduct | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // useSyncExternalStore en lugar de useState + useEffect
-  const state = useSyncExternalStore(
-    demoTableState.subscribe.bind(demoTableState),
-    demoTableState.getState.bind(demoTableState),
-    demoTableState.getState.bind(demoTableState)
-  );
+  // Datos del servidor (readonly, vienen del Server Component)
+  const { products, pagination, stats, filters } = initialData;
 
-  // Leer estado de URL
+  // Leer estado de URL para sincronizar UI
   const urlState = useMemo(() => {
     const getParam = (key: string) => searchParams.get(`${PREFIX}_${key}`);
     return {
@@ -155,12 +145,12 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
       sortDir: (getParam("sortDir") || "desc") as "asc" | "desc",
       search: getParam("search") || "",
       status: (getParam("status") || "all") as ProductStatus | "all",
-      category: getParam("category") || "all",
+      category: (getParam("category") || "all") as ProductCategory | "all",
     };
   }, [searchParams]);
 
-  // Actualizar URL SIN disparar navegación (evita doble fetch)
-  const updateUrl = useCallback(
+  // Navegar con router.replace - dispara re-fetch en Server Component
+  const navigate = useCallback(
     (updates: Partial<typeof urlState>) => {
       const params = new URLSearchParams(searchParams.toString());
       const newState = { ...urlState, ...updates };
@@ -190,203 +180,154 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
 
       const queryString = params.toString();
       const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      window.history.replaceState(null, "", newUrl);
+
+      // Mostrar estado de navegación
+      setIsNavigating(true);
+      router.replace(newUrl, { scroll: false });
+
+      // El Server Component se re-renderizará con los nuevos datos
+      // Reset navigating después de un pequeño delay para UX
+      setTimeout(() => setIsNavigating(false), 100);
     },
-    [searchParams, pathname, urlState]
+    [searchParams, pathname, router, urlState]
   );
 
-  // Fetch con Server Action usando safeTransition (evita doble fetch en Strict Mode)
-  const fetchProducts = useCallback(
-    (params: typeof urlState) => {
-      safeTransition(async (isStale) => {
-        const sorting: DemoTableSorting[] = params.sort
-          ? [{ id: params.sort, desc: params.sortDir === "desc" }]
-          : [];
-
-        const filters: DemoProductFilters = {
-          search: params.search,
-          status: params.status as ProductStatus | "all",
-          category: params.category as ProductCategory | "all",
-        };
-
-        const result = await getProductsAction({
-          page: params.page - 1,
-          pageSize: params.pageSize,
-          filters,
-          sorting,
-        });
-
-        // Verificar si esta ejecución es obsoleta (Strict Mode)
-        if (isStale()) return;
-
-        if (result.error) {
-          demoTableState.setError(result.error);
-          toast.error(result.error);
-          return;
-        }
-
-        if (result.data) {
-          demoTableState.setProducts(result.data.data);
-          demoTableState.setPagination({
-            pageIndex: params.page - 1,
-            pageSize: params.pageSize,
-            totalRows: result.data.pagination.totalRows,
-            totalPages: result.data.pagination.totalPages,
-          });
-          demoTableState.setFilters(filters);
-        }
+  // Handlers de navegación (disparan Server Component re-fetch)
+  const handlePaginationChange = useCallback(
+    (paginationUpdate: { pageIndex: number; pageSize: number }) => {
+      setRowSelection({}); // Limpiar selección al cambiar página
+      navigate({
+        page: paginationUpdate.pageIndex + 1,
+        pageSize: paginationUpdate.pageSize,
       });
     },
-    [safeTransition]
-  );
-
-  const fetchStats = useCallback(() => {
-    safeTransition(async (isStale) => {
-      const result = await getStatsAction();
-      if (isStale()) return;
-      if (result.data) {
-        demoTableState.setStats(result.data);
-      }
-    });
-  }, [safeTransition]);
-
-  const handleRefresh = useCallback(() => {
-    fetchProducts(urlState);
-    fetchStats();
-    toast.success("Datos actualizados");
-  }, [fetchProducts, fetchStats, urlState]);
-
-  // Handlers que actualizan URL y disparan fetch
-  const handlePaginationChange = useCallback(
-    (pagination: { pageIndex: number; pageSize: number }) => {
-      const newParams = {
-        ...urlState,
-        page: pagination.pageIndex + 1,
-        pageSize: pagination.pageSize,
-      };
-      updateUrl(newParams);
-      fetchProducts(newParams);
-    },
-    [urlState, updateUrl, fetchProducts]
+    [navigate]
   );
 
   const handleSortingChange = useCallback(
     (sorting: DemoTableSorting[]) => {
-      const newParams = {
-        ...urlState,
+      navigate({
         sort: sorting.length > 0 ? sorting[0].id : "createdAt",
-        sortDir: sorting.length > 0 && sorting[0].desc ? "desc" as const : "asc" as const,
+        sortDir: sorting.length > 0 && sorting[0].desc ? "desc" : "asc",
         page: 1,
-      };
-      updateUrl(newParams);
-      fetchProducts(newParams);
+      });
     },
-    [urlState, updateUrl, fetchProducts]
+    [navigate]
   );
 
   const handleSearchChange = useCallback(
     (search: string) => {
-      const newParams = { ...urlState, search, page: 1 };
-      updateUrl(newParams);
-      fetchProducts(newParams);
+      navigate({ search, page: 1 });
     },
-    [urlState, updateUrl, fetchProducts]
+    [navigate]
   );
 
   const handleFiltersChange = useCallback(
     (newFilters: Partial<DemoProductFilters>) => {
-      demoTableState.setFilters(newFilters);
-      const newParams = {
-        ...urlState,
+      navigate({
         status: newFilters.status ?? urlState.status,
         category: newFilters.category ?? urlState.category,
         page: 1,
-      };
-      updateUrl(newParams);
-      fetchProducts(newParams);
+      });
     },
-    [urlState, updateUrl, fetchProducts]
+    [navigate, urlState.status, urlState.category]
   );
 
-  // Actions
+  const handleRefresh = useCallback(() => {
+    router.refresh();
+    toast.success("Datos actualizados");
+  }, [router]);
+
+  // Dialog handlers
+  const openDialog = useCallback((type: DialogType, product: DemoProduct | null = null) => {
+    setActiveDialog(type);
+    setSelectedProduct(product);
+  }, []);
+
+  const closeDialog = useCallback(() => {
+    setActiveDialog(null);
+    setSelectedProduct(null);
+  }, []);
+
+  // Actions que modifican datos (usan Server Actions)
   const deleteProduct = useCallback(
     async (id: string) => {
-      demoTableState.setPending(true);
+      setIsPending(true);
       try {
         const result = await deleteProductAction(id);
         if (result.error) {
           toast.error(result.error);
           return;
         }
-        demoTableState.removeProduct(id);
-        demoTableState.closeDialog();
+        closeDialog();
         toast.success(result.success || "Producto eliminado");
-        fetchStats();
+        router.refresh(); // Refrescar datos del servidor
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Error al eliminar");
       } finally {
-        demoTableState.setPending(false);
+        setIsPending(false);
       }
     },
-    [fetchStats]
+    [closeDialog, router]
   );
 
   const bulkDeleteProducts = useCallback(
     async (ids: string[]) => {
-      demoTableState.setPending(true);
+      setIsPending(true);
       try {
         const result = await bulkDeleteProductsAction(ids);
         if (result.error) {
           toast.error(result.error);
           return;
         }
-        ids.forEach((id) => demoTableState.removeProduct(id));
-        demoTableState.clearSelection();
+        setRowSelection({});
         toast.success(result.success || `${ids.length} productos eliminados`);
-        fetchStats();
+        router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Error al eliminar");
       } finally {
-        demoTableState.setPending(false);
+        setIsPending(false);
       }
     },
-    [fetchStats]
+    [router]
   );
 
   const changeStatus = useCallback(
     async (id: string, status: ProductStatus) => {
-      demoTableState.setPending(true);
+      setIsPending(true);
       try {
         const result = await updateProductStatusAction(id, status);
         if (result.error) {
           toast.error(result.error);
           return;
         }
-        if (result.data) {
-          demoTableState.updateProduct(id, result.data);
-        }
         toast.success(result.success || "Estado actualizado");
-        fetchStats();
+        router.refresh();
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Error al cambiar estado");
       } finally {
-        demoTableState.setPending(false);
+        setIsPending(false);
       }
     },
-    [fetchStats]
+    [router]
   );
+
+  // Obtener productos seleccionados
+  const getSelectedProducts = useCallback(() => {
+    return products.filter((p) => rowSelection[p.id]);
+  }, [products, rowSelection]);
 
   // Ref para acciones estables
   const actionsRef = useRef({
-    openDialog: demoTableState.openDialog.bind(demoTableState),
+    openDialog,
     changeStatus,
-    getSelectedProducts: demoTableState.getSelectedProducts.bind(demoTableState),
+    getSelectedProducts,
     bulkDeleteProducts,
   });
   actionsRef.current = {
-    openDialog: demoTableState.openDialog.bind(demoTableState),
+    openDialog,
     changeStatus,
-    getSelectedProducts: demoTableState.getSelectedProducts.bind(demoTableState),
+    getSelectedProducts,
     bulkDeleteProducts,
   };
 
@@ -407,18 +348,18 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
       enabled: true,
       mode: "multiple" as const,
       showCheckbox: true,
-      selectedRows: state.rowSelection,
-      onSelectionChange: demoTableState.setRowSelection.bind(demoTableState),
+      selectedRows: rowSelection,
+      onSelectionChange: setRowSelection,
       selectOnRowClick: false,
     }),
-    [state.rowSelection]
+    [rowSelection]
   );
 
   const expansionConfig: ExpansionConfig<DemoProduct> = useMemo(
     () => ({
       enabled: true,
-      expandedRows: state.expanded,
-      onExpansionChange: demoTableState.setExpanded.bind(demoTableState),
+      expandedRows: expanded,
+      onExpansionChange: setExpanded,
       renderContent: (product: DemoProduct) => (
         <div className="p-4 bg-muted/30 rounded-md">
           <h4 className="font-medium mb-2">Descripción completa</h4>
@@ -447,21 +388,21 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
       ),
       expandOnClick: false,
     }),
-    [state.expanded]
+    [expanded]
   );
 
   const paginationConfig: PaginationConfig = useMemo(
     () => ({
       pageIndex: urlState.page - 1,
       pageSize: urlState.pageSize,
-      totalRows: state.pagination.totalRows,
-      totalPages: state.pagination.totalPages,
+      totalRows: pagination.totalRows,
+      totalPages: pagination.totalPages,
       pageSizeOptions: PAGE_SIZE_OPTIONS,
       onPaginationChange: handlePaginationChange,
       showPageNumbers: true,
       showFirstLast: true,
     }),
-    [urlState.page, urlState.pageSize, state.pagination.totalRows, state.pagination.totalPages, handlePaginationChange]
+    [urlState.page, urlState.pageSize, pagination.totalRows, pagination.totalPages, handlePaginationChange]
   );
 
   const sortingState: DemoTableSorting[] = useMemo(
@@ -483,7 +424,7 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
       globalFilter: urlState.search,
       onGlobalFilterChange: handleSearchChange,
       placeholder: "Buscar por nombre, SKU o descripción...",
-      // NO especificar debounceMs - usa el global de 700ms desde constants.ts
+      // Usa el global de 700ms desde constants.ts
       showClearButton: true,
     }),
     [urlState.search, handleSearchChange]
@@ -492,16 +433,16 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
   const columnVisibilityConfig: ColumnVisibilityConfig = useMemo(
     () => ({
       enabled: true,
-      columnVisibility: state.columnVisibility,
-      onColumnVisibilityChange: demoTableState.setColumnVisibility.bind(demoTableState),
+      columnVisibility: columnVisibility,
+      onColumnVisibilityChange: setColumnVisibility,
       alwaysVisibleColumns: ALWAYS_VISIBLE_COLUMNS,
     }),
-    [state.columnVisibility]
+    [columnVisibility]
   );
 
   const filtersComponent = useMemo(
-    () => <DemoTableFilters filters={state.filters} onFiltersChange={handleFiltersChange} />,
-    [state.filters, handleFiltersChange]
+    () => <DemoTableFilters filters={filters} onFiltersChange={handleFiltersChange} />,
+    [filters, handleFiltersChange]
   );
 
   const toolbarConfig: ToolbarConfig = useMemo(
@@ -599,11 +540,11 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" className="gap-2">
           <Package className="h-4 w-4" />
-          <span className="hidden sm:inline">{state.pagination.totalRows} productos</span>
+          <span className="hidden sm:inline">{pagination.totalRows} productos</span>
         </Button>
       </div>
     ),
-    [state.pagination.totalRows]
+    [pagination.totalRows]
   );
 
   const handleBulkDelete = useCallback(() => {
@@ -636,15 +577,15 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <DemoTableHeader isPending={isPending || state.isPending} onRefresh={handleRefresh} />
+      <DemoTableHeader isNavigating={isNavigating || isPending} onRefresh={handleRefresh} />
 
       <AnimatedSection animation="fade-up" delay={100}>
-        <DemoTableStats stats={state.stats} isLoading={false} />
+        <DemoTableStats stats={stats} isLoading={isNavigating} />
       </AnimatedSection>
 
       <AnimatedSection animation="fade-up" delay={200}>
         <CustomDataTable
-          data={state.products}
+          data={products}
           columns={columns}
           getRowId={getRowId}
           selection={selectionConfig}
@@ -659,8 +600,8 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
           print={PRINT_CONFIG}
           fullscreen={FULLSCREEN_CONFIG}
           style={STYLE_CONFIG}
-          isLoading={state.isLoading}
-          isPending={isPending || state.isPending}
+          isLoading={false}
+          isPending={isNavigating || isPending}
           emptyMessage="No se encontraron productos"
           emptyIcon={emptyIcon}
           headerActions={headerActions}
@@ -668,17 +609,17 @@ export function DemoTableClient({ initialData }: DemoTableClientProps) {
         />
 
         <ProductDetailsDialog
-          key={`details-${state.selectedProduct?.id}`}
-          product={state.selectedProduct}
-          open={state.activeDialog === "details"}
-          onOpenChange={(open) => !open && demoTableState.closeDialog()}
+          key={`details-${selectedProduct?.id}`}
+          product={selectedProduct}
+          open={activeDialog === "details"}
+          onOpenChange={(open) => !open && closeDialog()}
         />
 
         <DeleteProductDialog
-          key={`delete-${state.selectedProduct?.id}`}
-          product={state.selectedProduct}
-          open={state.activeDialog === "delete"}
-          onOpenChange={(open) => !open && demoTableState.closeDialog()}
+          key={`delete-${selectedProduct?.id}`}
+          product={selectedProduct}
+          open={activeDialog === "delete"}
+          onOpenChange={(open) => !open && closeDialog()}
           onConfirm={handleDelete}
         />
       </AnimatedSection>

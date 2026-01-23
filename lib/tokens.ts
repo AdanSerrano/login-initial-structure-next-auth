@@ -5,9 +5,12 @@ export const generateVerificationToken = async (email: string) => {
   const token = uuidv4();
   const expires = new Date(new Date().getTime() + 3600 * 1000); // 1 hora
 
+  // Normalizar email a minúsculas
+  const normalizedEmail = email.toLowerCase();
+
   // Eliminar token existente si hay uno
   const existingToken = await db.verificationToken.findFirst({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (existingToken) {
@@ -18,7 +21,7 @@ export const generateVerificationToken = async (email: string) => {
 
   const verificationToken = await db.verificationToken.create({
     data: {
-      email,
+      email: normalizedEmail,
       token,
       expires,
     },
@@ -40,8 +43,9 @@ export const getVerificationTokenByToken = async (token: string) => {
 
 export const getVerificationTokenByEmail = async (email: string) => {
   try {
+    // Normalizar email a minúsculas
     const verificationToken = await db.verificationToken.findFirst({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
     return verificationToken;
   } catch {
@@ -53,8 +57,11 @@ export const generatePasswordResetToken = async (email: string) => {
   const token = uuidv4();
   const expires = new Date(new Date().getTime() + 3600 * 1000); // 1 hora
 
+  // Normalizar email a minúsculas
+  const normalizedEmail = email.toLowerCase();
+
   const existingToken = await db.passwordResetToken.findFirst({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (existingToken) {
@@ -65,7 +72,7 @@ export const generatePasswordResetToken = async (email: string) => {
 
   const passwordResetToken = await db.passwordResetToken.create({
     data: {
-      email,
+      email: normalizedEmail,
       token,
       expires,
     },
@@ -87,8 +94,9 @@ export const getPasswordResetTokenByToken = async (token: string) => {
 
 export const getPasswordResetTokenByEmail = async (email: string) => {
   try {
+    // Normalizar email a minúsculas
     const passwordResetToken = await db.passwordResetToken.findFirst({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
     return passwordResetToken;
   } catch {
@@ -104,8 +112,11 @@ export const generateTwoFactorToken = async (email: string) => {
   const token = generateSixDigitCode();
   const expires = new Date(new Date().getTime() + 10 * 60 * 1000); // 10 minutos
 
+  // Normalizar email a minúsculas
+  const normalizedEmail = email.toLowerCase();
+
   const existingToken = await db.twoFactorToken.findFirst({
-    where: { email },
+    where: { email: normalizedEmail },
   });
 
   if (existingToken) {
@@ -116,7 +127,7 @@ export const generateTwoFactorToken = async (email: string) => {
 
   const twoFactorToken = await db.twoFactorToken.create({
     data: {
-      email,
+      email: normalizedEmail,
       token,
       expires,
     },
@@ -138,8 +149,9 @@ export const getTwoFactorTokenByToken = async (token: string) => {
 
 export const getTwoFactorTokenByEmail = async (email: string) => {
   try {
+    // Normalizar email a minúsculas
     const twoFactorToken = await db.twoFactorToken.findFirst({
-      where: { email },
+      where: { email: email.toLowerCase() },
     });
     return twoFactorToken;
   } catch {

@@ -2,27 +2,11 @@
  * Sistema de Seguridad - Exports Centralizados
  *
  * Módulos disponibles:
- * - Redis: Cliente para almacenamiento distribuido
- * - Rate Limiter: Control de tasa de requests
+ * - Rate Limiter: Control de tasa de requests (en memoria)
  * - Logger: Logging estructurado de seguridad
  * - Alerts: Sistema de alertas y notificaciones
  * - WAF: Web Application Firewall
  */
-
-// Redis
-export {
-  getRedisClient,
-  isRedisConnected,
-  closeRedisConnection,
-  redisGet,
-  redisSet,
-  redisIncr,
-  redisTTL,
-  redisDel,
-  redisZAdd,
-  redisZCount,
-  redisZRemRangeByScore,
-} from "./redis";
 
 // Rate Limiter
 export {

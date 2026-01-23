@@ -59,8 +59,9 @@ export class UserRepository {
   }
 
   public async findByEmail(email: string) {
+    // Normalizar a minúsculas para búsqueda case-insensitive
     return await db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
       select: {
         id: true,
         email: true,
@@ -70,8 +71,9 @@ export class UserRepository {
   }
 
   public async findByUserName(userName: string) {
+    // Normalizar a minúsculas para búsqueda case-insensitive
     return await db.user.findUnique({
-      where: { userName },
+      where: { userName: userName.toLowerCase() },
       select: {
         id: true,
         userName: true,
@@ -105,8 +107,9 @@ export class UserRepository {
   }
 
   public async getUserDeletionStatusByEmail(email: string): Promise<UserDeletionStatus | null> {
+    // Normalizar a minúsculas para búsqueda case-insensitive
     return await db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
       select: {
         id: true,
         email: true,
@@ -123,7 +126,8 @@ export class UserRepository {
       where: { id: userId },
       data: {
         name: data.name,
-        userName: data.userName || null,
+        // Normalizar username a minúsculas al guardar
+        userName: data.userName?.toLowerCase() || null,
         image: data.image || null,
       },
       select: {
@@ -139,7 +143,8 @@ export class UserRepository {
     return await db.user.update({
       where: { id: userId },
       data: {
-        email: data.email,
+        // Normalizar email a minúsculas al guardar
+        email: data.email.toLowerCase(),
         emailVerified: data.emailVerified,
       },
       select: {

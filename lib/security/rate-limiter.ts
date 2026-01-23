@@ -1,22 +1,11 @@
 /**
- * Rate Limiter Distribuido
+ * Rate Limiter en Memoria
  *
  * Implementa rate limiting con:
- * - Redis para entornos distribuidos (producción)
- * - Fallback a memoria para desarrollo
- * - Algoritmo de ventana deslizante para mayor precisión
+ * - Almacenamiento en memoria
+ * - Algoritmo de ventana fija para simplicidad y rendimiento
  * - Soporte para múltiples tipos de límites
  */
-
-import {
-  isRedisConnected,
-  redisIncr,
-  redisTTL,
-  redisZAdd,
-  redisZCount,
-  redisZRemRangeByScore,
-  redisDel,
-} from "./redis";
 
 // ============================================================================
 // TIPOS
@@ -119,7 +108,7 @@ export const RATE_LIMIT_CONFIGS: Record<RateLimitType, RateLimitConfig> = {
 };
 
 // ============================================================================
-// STORAGE EN MEMORIA (FALLBACK)
+// STORAGE EN MEMORIA
 // ============================================================================
 
 interface MemoryRecord {
@@ -143,74 +132,7 @@ if (typeof setInterval !== "undefined") {
 }
 
 // ============================================================================
-// RATE LIMITER CON REDIS
-// ============================================================================
-
-/**
- * Rate limiting con Redis usando ventana deslizante
- */
-async function checkRateLimitRedis(
-  identifier: string,
-  config: RateLimitConfig
-): Promise<RateLimitResult> {
-  const now = Date.now();
-  const windowStart = now - config.windowMs;
-  const key = `ratelimit:${identifier}`;
-
-  try {
-    // Limpiar timestamps antiguos
-    await redisZRemRangeByScore(key, 0, windowStart);
-
-    // Contar requests en la ventana actual
-    const count = await redisZCount(key, windowStart, now);
-
-    if (count === null) {
-      // Redis no disponible, usar memoria
-      return checkRateLimitMemory(identifier, config);
-    }
-
-    if (count >= config.maxRequests) {
-      // Límite excedido
-      const ttl = await redisTTL(key);
-      const resetTime = now + (ttl ? ttl * 1000 : config.windowMs);
-
-      return {
-        allowed: false,
-        remaining: 0,
-        resetTime,
-        limit: config.maxRequests,
-        retryAfter: Math.ceil((resetTime - now) / 1000),
-      };
-    }
-
-    // Agregar timestamp actual
-    await redisZAdd(key, now, `${now}-${Math.random()}`);
-
-    // Establecer expiración si es necesario
-    const ttl = await redisTTL(key);
-    if (ttl === -1) {
-      // Sin expiración, establecer una
-      const client = (await import("./redis")).getRedisClient();
-      if (client) {
-        await client.expire(key, Math.ceil(config.windowMs / 1000));
-      }
-    }
-
-    return {
-      allowed: true,
-      remaining: config.maxRequests - count - 1,
-      resetTime: now + config.windowMs,
-      limit: config.maxRequests,
-    };
-  } catch (error) {
-    console.error("[RATE-LIMITER] Redis error:", error);
-    // Fallback a memoria
-    return checkRateLimitMemory(identifier, config);
-  }
-}
-
-// ============================================================================
-// RATE LIMITER EN MEMORIA (FALLBACK)
+// RATE LIMITER EN MEMORIA
 // ============================================================================
 
 /**
@@ -278,12 +200,6 @@ export async function checkRateLimit(
   const config = RATE_LIMIT_CONFIGS[type];
   const key = `${type}:${identifier}`;
 
-  // Usar Redis si está disponible
-  if (isRedisConnected()) {
-    return checkRateLimitRedis(key, config);
-  }
-
-  // Fallback a memoria
   return checkRateLimitMemory(key, config);
 }
 
@@ -295,12 +211,6 @@ export async function resetRateLimit(
   type: RateLimitType = "general"
 ): Promise<boolean> {
   const key = `${type}:${identifier}`;
-  const redisKey = `ratelimit:${key}`;
-
-  // Limpiar en Redis
-  if (isRedisConnected()) {
-    await redisDel(redisKey);
-  }
 
   // Limpiar en memoria
   memoryStore.delete(`ratelimit:${key}`);
@@ -332,16 +242,10 @@ export function createRateLimiter(config: RateLimitConfig) {
   return {
     check: (identifier: string) => {
       const key = `custom:${identifier}`;
-      if (isRedisConnected()) {
-        return checkRateLimitRedis(key, config);
-      }
       return Promise.resolve(checkRateLimitMemory(key, config));
     },
     reset: async (identifier: string) => {
       const key = `ratelimit:custom:${identifier}`;
-      if (isRedisConnected()) {
-        await redisDel(key);
-      }
       memoryStore.delete(key);
       return true;
     },
@@ -364,18 +268,6 @@ export async function blockIP(
 ): Promise<void> {
   const until = Date.now() + durationMs;
 
-  // En Redis
-  if (isRedisConnected()) {
-    const client = (await import("./redis")).getRedisClient();
-    if (client) {
-      await client.setex(
-        `blocked:${ip}`,
-        Math.ceil(durationMs / 1000),
-        JSON.stringify({ until, reason })
-      );
-    }
-  }
-
   // En memoria
   blockedIPs.set(ip, { until, reason });
 }
@@ -386,18 +278,6 @@ export async function blockIP(
 export async function isIPBlocked(
   ip: string
 ): Promise<{ blocked: boolean; reason?: string; until?: number }> {
-  // Verificar en Redis primero
-  if (isRedisConnected()) {
-    const { redisGet } = await import("./redis");
-    const data = await redisGet(`blocked:${ip}`);
-    if (data) {
-      const parsed = JSON.parse(data);
-      if (Date.now() < parsed.until) {
-        return { blocked: true, reason: parsed.reason, until: parsed.until };
-      }
-    }
-  }
-
   // Verificar en memoria
   const record = blockedIPs.get(ip);
   if (record) {
@@ -414,11 +294,6 @@ export async function isIPBlocked(
  * Desbloquea una IP
  */
 export async function unblockIP(ip: string): Promise<void> {
-  // En Redis
-  if (isRedisConnected()) {
-    await redisDel(`blocked:${ip}`);
-  }
-
   // En memoria
   blockedIPs.delete(ip);
 }

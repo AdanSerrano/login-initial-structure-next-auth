@@ -8,14 +8,17 @@ export class LoginRepository {
         return null;
       }
 
-      if (loginUser.identifier.includes("@")) {
+      // Normalizar a minúsculas para búsqueda case-insensitive
+      const normalizedIdentifier = loginUser.identifier.toLowerCase();
+
+      if (normalizedIdentifier.includes("@")) {
         return await db.user.findUnique({
-          where: { email: loginUser.identifier },
+          where: { email: normalizedIdentifier },
         });
       }
 
       return await db.user.findUnique({
-        where: { userName: loginUser.identifier },
+        where: { userName: normalizedIdentifier },
       });
     } catch (error) {
       console.error("Error en getUserByIdentifier:", error);

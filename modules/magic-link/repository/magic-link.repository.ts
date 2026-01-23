@@ -6,8 +6,9 @@ const MAGIC_LINK_EXPIRY_MINUTES = 15;
 
 export class MagicLinkRepository {
   async getUserByEmail(email: string) {
+    // Normalizar a minúsculas para búsqueda case-insensitive
     return await db.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase() },
       select: {
         id: true,
         email: true,
@@ -29,8 +30,11 @@ export class MagicLinkRepository {
       new Date().getTime() + MAGIC_LINK_EXPIRY_MINUTES * 60 * 1000
     );
 
+    // Normalizar email a minúsculas
+    const normalizedEmail = email.toLowerCase();
+
     const existingToken = await db.magicLinkToken.findFirst({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingToken) {
@@ -41,7 +45,7 @@ export class MagicLinkRepository {
 
     const magicLinkToken = await db.magicLinkToken.create({
       data: {
-        email,
+        email: normalizedEmail,
         token,
         expires,
       },

@@ -9,7 +9,6 @@
  */
 
 import { NextResponse } from "next/server";
-import { isRedisConnected } from "@/lib/security/redis";
 import { db } from "@/utils/db";
 
 interface HealthStatus {
@@ -19,7 +18,6 @@ interface HealthStatus {
   uptime: number;
   checks: {
     database: { status: "up" | "down"; latency?: number };
-    redis: { status: "up" | "down" | "not_configured" };
     memory: { used: number; total: number; percentage: number };
   };
 }
@@ -30,7 +28,6 @@ const startTime = Date.now();
 export async function GET(): Promise<NextResponse<HealthStatus>> {
   const checks = {
     database: { status: "down" as "up" | "down", latency: undefined as number | undefined },
-    redis: { status: "not_configured" as "up" | "down" | "not_configured" },
     memory: { used: 0, total: 0, percentage: 0 },
   };
 
@@ -47,26 +44,6 @@ export async function GET(): Promise<NextResponse<HealthStatus>> {
   } catch {
     checks.database = { status: "down", latency: undefined };
     overallStatus = "unhealthy";
-  }
-
-  // Check Redis
-  try {
-    // Verificar si Redis está configurado (REDIS_URL o REDIS_HOST)
-    if (process.env.REDIS_URL || process.env.REDIS_HOST) {
-      // Intentar obtener el cliente para inicializar la conexión
-      const { getRedisClient } = await import("@/lib/security/redis");
-      getRedisClient();
-
-      checks.redis = {
-        status: isRedisConnected() ? "up" : "down",
-      };
-      if (checks.redis.status === "down") {
-        overallStatus = overallStatus === "healthy" ? "degraded" : overallStatus;
-      }
-    }
-  } catch {
-    checks.redis = { status: "down" };
-    overallStatus = overallStatus === "healthy" ? "degraded" : overallStatus;
   }
 
   // Check Memory (Node.js)

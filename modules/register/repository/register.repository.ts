@@ -15,8 +15,9 @@ export class RegisterRepository {
       if (!email) {
         return null;
       }
+      // Normalizar a minúsculas para búsqueda case-insensitive
       return await db.user.findUnique({
-        where: { email },
+        where: { email: email.toLowerCase() },
       });
     } catch (error) {
       console.error("Error en getUserByEmail:", error);
@@ -29,8 +30,9 @@ export class RegisterRepository {
       if (!userName) {
         return null;
       }
+      // Normalizar a minúsculas para búsqueda case-insensitive
       return await db.user.findUnique({
-        where: { userName },
+        where: { userName: userName.toLowerCase() },
       });
     } catch (error) {
       console.error("Error en getUserByUsername:", error);
@@ -40,10 +42,11 @@ export class RegisterRepository {
 
   public async createUser(registerData: RegisterUser, hashedPassword: string) {
     try {
+      // Normalizar email y username a minúsculas al guardar
       return await db.user.create({
         data: {
-          email: registerData.email,
-          userName: registerData.userName,
+          email: registerData.email.toLowerCase(),
+          userName: registerData.userName?.toLowerCase(),
           name: registerData.name,
           password: hashedPassword,
         },

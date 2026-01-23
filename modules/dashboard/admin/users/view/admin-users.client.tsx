@@ -1,18 +1,16 @@
 "use client";
 
-import { memo, useSyncExternalStore, useCallback, useMemo, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { AlertCircle, Ban, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CustomDataTable, useSafeTransition } from "@/components/custom-datatable";
+import { CustomDataTable } from "@/components/custom-datatable";
 import { AnimatedSection } from "@/components/ui/animated-section";
 
-import { adminUsersState } from "../state/admin-users.state";
 import {
-  getUsersAction,
   blockUserAction,
   unblockUserAction,
   changeRoleAction,
@@ -125,10 +123,10 @@ const AdminUsersHeader = memo(function AdminUsersHeader() {
 interface ErrorAlertProps {
   error: string;
   onRetry: () => void;
-  isPending: boolean;
+  isNavigating: boolean;
 }
 
-const ErrorAlert = memo(function ErrorAlert({ error, onRetry, isPending }: ErrorAlertProps) {
+const ErrorAlert = memo(function ErrorAlert({ error, onRetry, isNavigating }: ErrorAlertProps) {
   return (
     <Alert variant="destructive" role="alert" aria-live="assertive">
       <AlertCircle className="h-4 w-4" />
@@ -139,10 +137,10 @@ const ErrorAlert = memo(function ErrorAlert({ error, onRetry, isPending }: Error
           variant="outline"
           size="sm"
           onClick={onRetry}
-          disabled={isPending}
+          disabled={isNavigating}
           className="ml-4"
         >
-          <RefreshCw className={`mr-2 h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+          <RefreshCw className={`mr-2 h-4 w-4 ${isNavigating ? "animate-spin" : ""}`} />
           Reintentar
         </Button>
       </AlertDescription>
@@ -189,33 +187,23 @@ const BulkActions = memo(function BulkActions({
 });
 
 export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isPending, safeTransition } = useSafeTransition();
 
-  // Inicializar el state global con los datos del servidor (solo una vez)
-  const isInitializedRef = useRef(false);
-  if (!isInitializedRef.current) {
-    adminUsersState.setUsers(initialData.users);
-    adminUsersState.setPagination(initialData.pagination);
-    if (initialData.stats) {
-      adminUsersState.setStats(initialData.stats);
-    }
-    adminUsersState.setFilters(initialData.filters);
-    if (initialData.error) {
-      adminUsersState.setError(initialData.error);
-    }
-    adminUsersState.setInitialized(true);
-    isInitializedRef.current = true;
-  }
+  // Estado de UI local (no datos del servidor)
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [activeDialog, setActiveDialog] = useState<AdminUsersDialogType>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  const state = useSyncExternalStore(
-    adminUsersState.subscribe.bind(adminUsersState),
-    adminUsersState.getSnapshot.bind(adminUsersState),
-    adminUsersState.getServerSnapshot.bind(adminUsersState)
-  );
+  // Datos del servidor (readonly, vienen del Server Component)
+  const { users, stats, pagination, error } = initialData;
 
-  // Leer estado de URL
+  // Leer estado de URL para sincronizar UI
   const urlState = useMemo(() => {
     const getParam = (key: string) => searchParams.get(`${PREFIX}_${key}`);
     return {
@@ -229,10 +217,8 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
     };
   }, [searchParams]);
 
-  // Actualizar URL sin disparar navegación de Next.js (evita doble fetch)
-  // Usamos history.replaceState para actualizar la URL para bookmarks
-  // sin causar que el Server Component se re-renderice
-  const updateUrl = useCallback(
+  // Navegar con router.replace - dispara re-fetch en Server Component con _rsc
+  const navigate = useCallback(
     (updates: Partial<typeof urlState>) => {
       const params = new URLSearchParams(searchParams.toString());
       const newState = { ...urlState, ...updates };
@@ -263,130 +249,56 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       const queryString = params.toString();
       const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
-      // Usar history.replaceState en lugar de router.replace
-      // Esto actualiza la URL sin disparar navegación de Next.js
-      window.history.replaceState(null, "", newUrl);
+      setIsNavigating(true);
+      router.replace(newUrl, { scroll: false });
+      setTimeout(() => setIsNavigating(false), 100);
     },
-    [searchParams, pathname, urlState]
+    [searchParams, pathname, router, urlState]
   );
 
-  // Fetch con Server Action usando safeTransition para evitar dobles ejecuciones de Strict Mode
-  const fetchUsers = useCallback(
-    (params: typeof urlState) => {
-      safeTransition(async (isStale) => {
-        const sorting: AdminUsersSorting[] = params.sort
-          ? [{ id: params.sort, desc: params.sortDir === "desc" }]
-          : [];
-
-        const filters: AdminUsersFilters = {
-          search: params.search,
-          role: params.role,
-          status: params.status,
-        };
-
-        const result = await getUsersAction({
-          page: params.page,
-          limit: params.pageSize,
-          sorting,
-          filters,
-        });
-
-        // Ignorar si una ejecución más reciente ya inició (Strict Mode o usuario escribió rápido)
-        if (isStale()) return;
-
-        if (result.error) {
-          adminUsersState.setError(result.error);
-          toast.error(result.error);
-        } else if (result.data) {
-          adminUsersState.setError(null);
-          adminUsersState.setUsers(result.data.users);
-          adminUsersState.setStats(result.data.stats);
-          adminUsersState.setPagination({
-            pageIndex: params.page - 1,
-            pageSize: params.pageSize,
-            totalRows: result.data.pagination.total,
-            totalPages: result.data.pagination.totalPages,
-          });
-          adminUsersState.setFilters(filters);
-        }
+  // Handlers de navegación (disparan Server Component re-fetch)
+  const handlePaginationChange = useCallback(
+    (paginationUpdate: { pageIndex: number; pageSize: number }) => {
+      setRowSelection({});
+      navigate({
+        page: paginationUpdate.pageIndex + 1,
+        pageSize: paginationUpdate.pageSize,
       });
     },
-    [safeTransition]
-  );
-
-  const handleRefresh = useCallback(() => {
-    fetchUsers(urlState);
-    toast.success("Datos actualizados");
-  }, [fetchUsers, urlState]);
-
-  // Handlers que actualizan URL y disparan fetch
-  const handlePaginationChange = useCallback(
-    (pagination: { pageIndex: number; pageSize: number }) => {
-      const newParams = {
-        ...urlState,
-        page: pagination.pageIndex + 1,
-        pageSize: pagination.pageSize,
-      };
-      updateUrl(newParams);
-      fetchUsers(newParams);
-    },
-    [urlState, updateUrl, fetchUsers]
+    [navigate]
   );
 
   const handleSortingChange = useCallback(
     (sorting: AdminUsersSorting[]) => {
-      const newParams = {
-        ...urlState,
+      navigate({
         sort: sorting.length > 0 ? sorting[0].id : DEFAULT_SORT,
-        sortDir: sorting.length > 0 && sorting[0].desc ? "desc" as const : "asc" as const,
+        sortDir: sorting.length > 0 && sorting[0].desc ? "desc" : "asc",
         page: 1,
-      };
-      updateUrl(newParams);
-      fetchUsers(newParams);
+      });
     },
-    [urlState, updateUrl, fetchUsers]
+    [navigate]
   );
 
   const handleSearchChange = useCallback(
     (search: string) => {
-      const newParams = { ...urlState, search, page: 1 };
-      updateUrl(newParams);
-      fetchUsers(newParams);
+      navigate({ search, page: 1 });
     },
-    [urlState, updateUrl, fetchUsers]
+    [navigate]
   );
 
   const handleFiltersChange = useCallback(
     (filters: AdminUsersFilters) => {
-      const newParams = {
-        ...urlState,
+      navigate({
         role: filters.role,
         status: filters.status,
         page: 1,
-      };
-      updateUrl(newParams);
-      fetchUsers(newParams);
+      });
     },
-    [urlState, updateUrl, fetchUsers]
+    [navigate]
   );
 
   const resetFilters = useCallback(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    const keysToDelete: string[] = [];
-    params.forEach((_, key) => {
-      if (key.startsWith(`${PREFIX}_`)) {
-        keysToDelete.push(key);
-      }
-    });
-    keysToDelete.forEach((key) => params.delete(key));
-
-    const queryString = params.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-
-    // Usar history.replaceState para evitar doble fetch
-    window.history.replaceState(null, "", newUrl);
-
-    fetchUsers({
+    navigate({
       page: DEFAULT_PAGE,
       pageSize: DEFAULT_PAGE_SIZE,
       sort: DEFAULT_SORT,
@@ -395,143 +307,186 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       role: DEFAULT_ROLE as Role | "all",
       status: DEFAULT_STATUS as AdminUserStatus,
     });
-  }, [searchParams, pathname, fetchUsers]);
+  }, [navigate]);
 
-  // Actions - usando safeTransition para evitar dobles ejecuciones de Strict Mode
+  const handleRefresh = useCallback(() => {
+    router.refresh();
+    toast.success("Datos actualizados");
+  }, [router]);
+
+  // Dialog handlers
+  const openDialog = useCallback((type: AdminUsersDialogType, user: AdminUser | null = null) => {
+    setActiveDialog(type);
+    setSelectedUser(user);
+  }, []);
+
+  const closeDialog = useCallback(() => {
+    setActiveDialog(null);
+    setSelectedUser(null);
+  }, []);
+
+  // Actions que modifican datos (usan Server Actions y luego router.refresh)
   const blockUser = useCallback(
-    (userId: string, reason?: string) => {
-      safeTransition(async (isStale) => {
+    async (userId: string, reason?: string) => {
+      setIsPending(true);
+      try {
         const result = await blockUserAction(userId, reason);
-        if (isStale()) return;
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
           toast.success(result.success);
-          adminUsersState.closeDialog();
-          fetchUsers(urlState);
+          closeDialog();
+          router.refresh();
         }
-      });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al bloquear usuario");
+      } finally {
+        setIsPending(false);
+      }
     },
-    [safeTransition, fetchUsers, urlState]
+    [closeDialog, router]
   );
 
   const unblockUser = useCallback(
-    (userId: string) => {
-      safeTransition(async (isStale) => {
+    async (userId: string) => {
+      setIsPending(true);
+      try {
         const result = await unblockUserAction(userId);
-        if (isStale()) return;
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
           toast.success(result.success);
-          adminUsersState.closeDialog();
-          fetchUsers(urlState);
+          closeDialog();
+          router.refresh();
         }
-      });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al desbloquear usuario");
+      } finally {
+        setIsPending(false);
+      }
     },
-    [safeTransition, fetchUsers, urlState]
+    [closeDialog, router]
   );
 
   const changeRole = useCallback(
-    (userId: string, newRole: Role) => {
-      safeTransition(async (isStale) => {
+    async (userId: string, newRole: Role) => {
+      setIsPending(true);
+      try {
         const result = await changeRoleAction(userId, newRole);
-        if (isStale()) return;
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
           toast.success(result.success);
-          adminUsersState.closeDialog();
-          fetchUsers(urlState);
+          closeDialog();
+          router.refresh();
         }
-      });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al cambiar rol");
+      } finally {
+        setIsPending(false);
+      }
     },
-    [safeTransition, fetchUsers, urlState]
+    [closeDialog, router]
   );
 
   const deleteUser = useCallback(
-    (userId: string, reason: string) => {
-      safeTransition(async (isStale) => {
+    async (userId: string, reason: string) => {
+      setIsPending(true);
+      try {
         const result = await deleteUserAction(userId, reason);
-        if (isStale()) return;
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
           toast.success(result.success);
-          adminUsersState.closeDialog();
-          fetchUsers(urlState);
+          closeDialog();
+          router.refresh();
         }
-      });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al eliminar usuario");
+      } finally {
+        setIsPending(false);
+      }
     },
-    [safeTransition, fetchUsers, urlState]
+    [closeDialog, router]
   );
 
   const restoreUser = useCallback(
-    (userId: string) => {
-      safeTransition(async (isStale) => {
+    async (userId: string) => {
+      setIsPending(true);
+      try {
         const result = await restoreUserAction(userId);
-        if (isStale()) return;
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
           toast.success(result.success);
-          adminUsersState.closeDialog();
-          fetchUsers(urlState);
+          closeDialog();
+          router.refresh();
         }
-      });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al restaurar usuario");
+      } finally {
+        setIsPending(false);
+      }
     },
-    [safeTransition, fetchUsers, urlState]
+    [closeDialog, router]
   );
 
   const bulkBlockUsers = useCallback(
-    (reason?: string) => {
-      const selectedIds = Object.keys(state.rowSelection).filter((id) => state.rowSelection[id]);
+    async (reason?: string) => {
+      const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
       if (selectedIds.length === 0) {
         toast.error("No hay usuarios seleccionados");
         return;
       }
 
-      safeTransition(async (isStale) => {
+      setIsPending(true);
+      try {
         const result = await bulkBlockUsersAction(selectedIds, reason);
-        if (isStale()) return;
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
           toast.success(result.success);
-          adminUsersState.clearSelection();
-          fetchUsers(urlState);
+          setRowSelection({});
+          router.refresh();
         }
-      });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error al bloquear usuarios");
+      } finally {
+        setIsPending(false);
+      }
     },
-    [safeTransition, state.rowSelection, fetchUsers, urlState]
+    [rowSelection, router]
   );
 
-  const bulkDeleteUsers = useCallback(() => {
-    const selectedIds = Object.keys(state.rowSelection).filter((id) => state.rowSelection[id]);
+  const bulkDeleteUsers = useCallback(async () => {
+    const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
     if (selectedIds.length === 0) {
       toast.error("No hay usuarios seleccionados");
       return;
     }
 
-    safeTransition(async (isStale) => {
+    setIsPending(true);
+    try {
       const result = await bulkDeleteUsersAction(selectedIds);
-      if (isStale()) return;
       if (result.error) {
         toast.error(result.error);
       } else if (result.success) {
         toast.success(result.success);
-        adminUsersState.clearSelection();
-        fetchUsers(urlState);
+        setRowSelection({});
+        router.refresh();
       }
-    });
-  }, [safeTransition, state.rowSelection, fetchUsers, urlState]);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al eliminar usuarios");
+    } finally {
+      setIsPending(false);
+    }
+  }, [rowSelection, router]);
 
   // Ref para acciones estables
   const actionsRef = useRef({
-    onOpenDialog: (dialog: AdminUsersDialogType, user: AdminUser) => {
-      adminUsersState.openDialog(dialog, user);
-    },
+    onOpenDialog: openDialog,
   });
+  actionsRef.current = { onOpenDialog: openDialog };
 
   // Columnas memoizadas
   const columns = useMemo(
@@ -545,24 +500,24 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       enabled: true,
       mode: "multiple",
       showCheckbox: true,
-      selectedRows: state.rowSelection,
-      onSelectionChange: adminUsersState.setRowSelection.bind(adminUsersState),
+      selectedRows: rowSelection,
+      onSelectionChange: setRowSelection,
     }),
-    [state.rowSelection]
+    [rowSelection]
   );
 
   const paginationConfig: PaginationConfig = useMemo(
     () => ({
       pageIndex: urlState.page - 1,
       pageSize: urlState.pageSize,
-      totalRows: state.pagination.totalRows,
-      totalPages: state.pagination.totalPages,
+      totalRows: pagination.totalRows,
+      totalPages: pagination.totalPages,
       pageSizeOptions: PAGE_SIZE_OPTIONS,
       onPaginationChange: handlePaginationChange,
       showRowsInfo: true,
       showSelectedInfo: true,
     }),
-    [urlState.page, urlState.pageSize, state.pagination.totalRows, state.pagination.totalPages, handlePaginationChange]
+    [urlState.page, urlState.pageSize, pagination.totalRows, pagination.totalPages, handlePaginationChange]
   );
 
   const sortingState: AdminUsersSorting[] = useMemo(
@@ -585,7 +540,7 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       onGlobalFilterChange: handleSearchChange,
       placeholder: "Buscar por nombre, email o usuario...",
       showClearButton: true,
-      // debounceMs usa el default global de 700ms (DEFAULT_FILTER_DEBOUNCE_MS)
+      // Usa el global de 700ms desde constants.ts
     }),
     [urlState.search, handleSearchChange]
   );
@@ -593,11 +548,11 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
   const columnVisibilityConfig: ColumnVisibilityConfig = useMemo(
     () => ({
       enabled: true,
-      columnVisibility: state.columnVisibility,
-      onColumnVisibilityChange: adminUsersState.setColumnVisibility.bind(adminUsersState),
+      columnVisibility: columnVisibility,
+      onColumnVisibilityChange: setColumnVisibility,
       alwaysVisibleColumns: ["user", "actions"],
     }),
-    [state.columnVisibility]
+    [columnVisibility]
   );
 
   const toolbarConfig: ToolbarConfig = useMemo(
@@ -634,17 +589,17 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
   const expansionConfig: ExpansionConfig<AdminUser> = useMemo(
     () => ({
       enabled: true,
-      expandedRows: state.expandedRows,
-      onExpansionChange: adminUsersState.setExpandedRows.bind(adminUsersState),
+      expandedRows: expandedRows,
+      onExpansionChange: setExpandedRows,
       renderContent: renderExpandedContent,
       expandOnClick: false,
     }),
-    [state.expandedRows, renderExpandedContent]
+    [expandedRows, renderExpandedContent]
   );
 
   const selectedCount = useMemo(
-    () => Object.values(state.rowSelection).filter(Boolean).length,
-    [state.rowSelection]
+    () => Object.values(rowSelection).filter(Boolean).length,
+    [rowSelection]
   );
 
   const filters: AdminUsersFilters = useMemo(
@@ -658,22 +613,24 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
 
   const getRowId = useCallback((row: AdminUser) => row.id, []);
 
+  const clearSelection = useCallback(() => setRowSelection({}), []);
+
   return (
     <div className="space-y-6">
       <AdminUsersHeader />
 
-      {state.error && (
+      {error && (
         <AnimatedSection animation="fade-up" delay={50}>
           <ErrorAlert
-            error={state.error}
+            error={error}
             onRetry={handleRefresh}
-            isPending={isPending}
+            isNavigating={isNavigating}
           />
         </AnimatedSection>
       )}
 
       <AnimatedSection animation="fade-up" delay={100}>
-        <AdminUsersStatsSection stats={state.stats} />
+        <AdminUsersStatsSection stats={stats} />
       </AnimatedSection>
 
       <AnimatedSection animation="fade-up" delay={200}>
@@ -689,12 +646,12 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
               isPending={isPending}
               onBulkBlock={() => bulkBlockUsers()}
               onBulkDelete={bulkDeleteUsers}
-              onClearSelection={adminUsersState.clearSelection.bind(adminUsersState)}
+              onClearSelection={clearSelection}
             />
           </div>
 
           <CustomDataTable
-            data={state.users}
+            data={users}
             columns={columns}
             getRowId={getRowId}
             selection={selectionConfig}
@@ -709,50 +666,50 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
             copy={COPY_CONFIG}
             print={PRINT_CONFIG}
             fullscreen={FULLSCREEN_CONFIG}
-            isLoading={state.isLoading}
-            isPending={isPending}
+            isLoading={false}
+            isPending={isNavigating || isPending}
             emptyMessage="No se encontraron usuarios"
           />
         </div>
       </AnimatedSection>
 
       <UserDetailsDialog
-        user={state.selectedUser}
-        open={state.activeDialog === "details"}
-        onClose={adminUsersState.closeDialog.bind(adminUsersState)}
+        user={selectedUser}
+        open={activeDialog === "details"}
+        onClose={closeDialog}
       />
 
       <BlockUserDialog
-        user={state.selectedUser}
-        open={state.activeDialog === "block" || state.activeDialog === "unblock"}
+        user={selectedUser}
+        open={activeDialog === "block" || activeDialog === "unblock"}
         isPending={isPending}
-        mode={state.activeDialog === "block" ? "block" : "unblock"}
-        onClose={adminUsersState.closeDialog.bind(adminUsersState)}
+        mode={activeDialog === "block" ? "block" : "unblock"}
+        onClose={closeDialog}
         onBlock={blockUser}
         onUnblock={unblockUser}
       />
 
       <ChangeRoleDialog
-        user={state.selectedUser}
-        open={state.activeDialog === "change-role"}
+        user={selectedUser}
+        open={activeDialog === "change-role"}
         isPending={isPending}
-        onClose={adminUsersState.closeDialog.bind(adminUsersState)}
+        onClose={closeDialog}
         onChangeRole={changeRole}
       />
 
       <DeleteUserDialog
-        user={state.selectedUser}
-        open={state.activeDialog === "delete"}
+        user={selectedUser}
+        open={activeDialog === "delete"}
         isPending={isPending}
-        onClose={adminUsersState.closeDialog.bind(adminUsersState)}
+        onClose={closeDialog}
         onDelete={deleteUser}
       />
 
       <RestoreUserDialog
-        user={state.selectedUser}
-        open={state.activeDialog === "restore"}
+        user={selectedUser}
+        open={activeDialog === "restore"}
         isPending={isPending}
-        onClose={adminUsersState.closeDialog.bind(adminUsersState)}
+        onClose={closeDialog}
         onRestore={restoreUser}
       />
     </div>
