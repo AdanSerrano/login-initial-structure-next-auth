@@ -33,9 +33,15 @@ import {
   Tablet,
 } from "lucide-react";
 import { useRecentActivity } from "../hooks/use-activity";
-import { RecentActivitySkeleton } from "./recent-activity.skeleton";
 import type { ActivityData } from "../types/sessions.types";
 import type { DeviceType } from "@/lib/device-parser";
+import type { PaginationMeta } from "@/types/pagination.types";
+
+export interface RecentActivityProps {
+  initialActivities: ActivityData[];
+  initialPagination: PaginationMeta | null;
+  initialError?: string | null;
+}
 
 const ACTION_LABELS: Record<string, string> = {
   LOGIN_SUCCESS: "Inicio de sesión",
@@ -165,17 +171,20 @@ const ActivityItem = memo(function ActivityItem({
   );
 });
 
-export const RecentActivity = memo(function RecentActivity() {
+export const RecentActivity = memo(function RecentActivity({
+  initialActivities,
+  initialPagination,
+  initialError,
+}: RecentActivityProps) {
   const {
     activities,
-    isLoading,
     isLoadingMore,
     error,
     hasMore,
     loadMore,
     refresh,
     total,
-  } = useRecentActivity();
+  } = useRecentActivity({ initialActivities, initialPagination, initialError });
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -189,6 +198,7 @@ export const RecentActivity = memo(function RecentActivity() {
     [hasMore, isLoadingMore, loadMore]
   );
 
+  // useEffect para IntersectionObserver es aceptable (API del navegador)
   useEffect(() => {
     const observer = new IntersectionObserver(handleIntersection, {
       root: null,
@@ -202,10 +212,6 @@ export const RecentActivity = memo(function RecentActivity() {
 
     return () => observer.disconnect();
   }, [handleIntersection]);
-
-  if (isLoading) {
-    return <RecentActivitySkeleton />;
-  }
 
   if (error) {
     return (

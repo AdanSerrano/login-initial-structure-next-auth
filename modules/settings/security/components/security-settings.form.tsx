@@ -32,9 +32,21 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { SecuritySettingsViewModel } from "../view-model/security-settings.view-model";
-import { SecuritySettingsSkeleton } from "./security-settings.skeleton";
 import { ActiveSessions } from "@/modules/sessions/components/active-sessions";
 import { RecentActivity } from "@/modules/sessions/components/recent-activity";
+import type { SecurityInfo } from "../services/security-settings.services";
+import type { SessionData, ActivityData } from "@/modules/sessions/types/sessions.types";
+import type { PaginationMeta } from "@/types/pagination.types";
+
+interface SecuritySettingsFormProps {
+  initialSecurityInfo: SecurityInfo | null;
+  initialSecurityError?: string | null;
+  initialSessions: SessionData[];
+  initialSessionsError?: string | null;
+  initialActivities: ActivityData[];
+  initialActivityPagination: PaginationMeta | null;
+  initialActivityError?: string | null;
+}
 
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("es", {
@@ -43,20 +55,26 @@ function formatDate(date: Date): string {
   }).format(new Date(date));
 }
 
-export const SecuritySettingsForm = memo(function SecuritySettingsForm() {
+export const SecuritySettingsForm = memo(function SecuritySettingsForm({
+  initialSecurityInfo,
+  initialSecurityError,
+  initialSessions,
+  initialSessionsError,
+  initialActivities,
+  initialActivityPagination,
+  initialActivityError,
+}: SecuritySettingsFormProps) {
   const {
     securityInfo,
-    isLoading,
     isPending,
     error,
     handleEnableTwoFactor,
     handleDisableTwoFactor,
     refreshSecurityInfo,
-  } = SecuritySettingsViewModel();
-
-  if (isLoading) {
-    return <SecuritySettingsSkeleton />;
-  }
+  } = SecuritySettingsViewModel({
+    initialSecurityInfo,
+    initialError: initialSecurityError,
+  });
 
   if (error) {
     return (
@@ -195,11 +213,18 @@ export const SecuritySettingsForm = memo(function SecuritySettingsForm() {
       </AnimatedSection>
 
       <AnimatedSection animation="fade-up" delay={100}>
-        <ActiveSessions />
+        <ActiveSessions
+          initialSessions={initialSessions}
+          initialError={initialSessionsError}
+        />
       </AnimatedSection>
 
       <AnimatedSection animation="fade-up" delay={200}>
-        <RecentActivity />
+        <RecentActivity
+          initialActivities={initialActivities}
+          initialPagination={initialActivityPagination}
+          initialError={initialActivityError}
+        />
       </AnimatedSection>
     </div>
   );

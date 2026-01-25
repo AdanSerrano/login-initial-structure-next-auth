@@ -1,76 +1,87 @@
 "use client";
 
-import { useState, useCallback, useEffect, useTransition } from "react";
+import { useCallback, useTransition, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { getRecentActivityAction } from "../actions/sessions.actions";
 import type { ActivityData } from "../types/sessions.types";
 import type { PaginationMeta } from "@/types/pagination.types";
 
-const DEFAULT_LIMIT = 10;
+interface UseRecentActivityProps {
+  initialActivities: ActivityData[];
+  initialPagination: PaginationMeta | null;
+  initialError?: string | null;
+}
 
-export function useRecentActivity() {
-  const [activities, setActivities] = useState<ActivityData[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function useRecentActivity({
+  initialActivities,
+  initialPagination,
+  initialError,
+}: UseRecentActivityProps) {
+  const router = useRouter();
   const [isLoadingMore, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
-  const loadInitial = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  // useRef para acumular actividades adicionales sin causar re-renders
+  const extraActivitiesRef = useRef<ActivityData[]>([]);
+  const currentPaginationRef = useRef<PaginationMeta | null>(initialPagination);
 
-    try {
-      const result = await getRecentActivityAction(1, DEFAULT_LIMIT);
+  // Forzar re-render solo cuando sea necesario
+  const forceUpdateRef = useRef(0);
 
-      if ("error" in result) {
-        setError(result.error);
-        return;
-      }
+  // useMemo para combinar actividades iniciales con las cargadas posteriormente
+  const activities = useMemo(() => {
+    // Leer forceUpdateRef para que el memo se invalide cuando cambie
+    void forceUpdateRef.current;
+    return [...initialActivities, ...extraActivitiesRef.current];
+  }, [initialActivities, forceUpdateRef.current]);
 
-      setActivities(result.data);
-      setPagination(result.pagination);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al cargar actividad";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const hasMore = useMemo(() => {
+    void forceUpdateRef.current;
+    return currentPaginationRef.current?.hasNextPage ?? false;
+  }, [forceUpdateRef.current]);
 
-  useEffect(() => {
-    loadInitial();
-  }, [loadInitial]);
+  const total = useMemo(() => {
+    void forceUpdateRef.current;
+    return currentPaginationRef.current?.total ?? initialPagination?.total ?? 0;
+  }, [initialPagination?.total, forceUpdateRef.current]);
+
+  const refresh = useCallback(() => {
+    // Reset extra activities on refresh
+    extraActivitiesRef.current = [];
+    currentPaginationRef.current = initialPagination;
+    startTransition(() => {
+      router.refresh();
+    });
+  }, [router, initialPagination]);
 
   const loadMore = useCallback(() => {
-    if (!pagination?.hasNextPage) return;
+    if (!currentPaginationRef.current?.hasNextPage || isLoadingMore) return;
 
     startTransition(async () => {
       try {
-        const nextPage = pagination.page + 1;
-        const result = await getRecentActivityAction(nextPage, DEFAULT_LIMIT);
+        const nextPage = currentPaginationRef.current!.page + 1;
+        const result = await getRecentActivityAction(nextPage, 10);
 
         if ("error" in result) {
           return;
         }
 
-        setActivities((prev) => [...prev, ...result.data]);
-        setPagination(result.pagination);
+        extraActivitiesRef.current = [...extraActivitiesRef.current, ...result.data];
+        currentPaginationRef.current = result.pagination;
+        // Forzar re-render
+        forceUpdateRef.current += 1;
       } catch (err) {
         console.error("Error loading more activity:", err);
       }
     });
-  }, [pagination]);
-
-  const hasMore = pagination?.hasNextPage ?? false;
+  }, [isLoadingMore]);
 
   return {
     activities,
-    isLoading,
+    error: initialError,
     isLoadingMore,
-    error,
     hasMore,
     loadMore,
-    refresh: loadInitial,
-    total: pagination?.total ?? 0,
+    refresh,
+    total,
   };
 }

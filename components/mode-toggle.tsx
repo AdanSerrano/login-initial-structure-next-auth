@@ -32,7 +32,7 @@ function ModeToggleComponent() {
             exit={{ rotate: 90, scale: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <Moon className="h-5 w-5" />
+            <Moon className="h-5 w-5" aria-hidden="true" />
           </motion.div>
         ) : (
           <motion.div
@@ -42,7 +42,7 @@ function ModeToggleComponent() {
             exit={{ rotate: -90, scale: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <Sun className="h-5 w-5" />
+            <Sun className="h-5 w-5" aria-hidden="true" />
           </motion.div>
         )}
       </AnimatePresence>

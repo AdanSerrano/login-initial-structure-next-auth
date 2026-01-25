@@ -11,7 +11,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ModeToggle } from "../mode-toggle";
+import { ModeToggleWrapper } from "../mode-toggle-wrapper";
 
 const routeLabels: Record<string, string> = {
   "/dashboard/services": "Panel",
@@ -62,7 +62,7 @@ export function DashboardHeader() {
             <BreadcrumbPage>{currentLabel}</BreadcrumbPage>
           </BreadcrumbItem>
           <BreadcrumbItem className="ml-auto">
-            <ModeToggle />
+            <ModeToggleWrapper />
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

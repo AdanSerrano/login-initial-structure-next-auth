@@ -34,10 +34,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useSessions } from "../hooks/use-sessions";
-import { ActiveSessionsSkeleton } from "./active-sessions.skeleton";
 import type { DeviceType } from "@/lib/device-parser";
 import { formatSessionInfo, getDeviceLabel } from "@/lib/device-parser";
 import type { SessionData } from "../types/sessions.types";
+
+interface ActiveSessionsProps {
+  initialSessions: SessionData[];
+  initialError?: string | null;
+}
 
 function formatRelativeTime(date: Date): string {
   const now = new Date();
@@ -174,21 +178,19 @@ const SessionItem = memo(function SessionItem({
   );
 });
 
-export const ActiveSessions = memo(function ActiveSessions() {
+export const ActiveSessions = memo(function ActiveSessions({
+  initialSessions,
+  initialError,
+}: ActiveSessionsProps) {
   const {
     sessions,
-    isLoading,
     isPending,
     error,
     revokeSession,
     revokeAllOther,
     refresh,
     hasOtherSessions,
-  } = useSessions();
-
-  if (isLoading) {
-    return <ActiveSessionsSkeleton />;
-  }
+  } = useSessions({ initialSessions, initialError });
 
   if (error) {
     return (

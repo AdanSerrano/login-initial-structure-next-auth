@@ -1,46 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  getSecurityInfoAction,
   enableTwoFactorAction,
   disableTwoFactorAction,
 } from "../actions/security-settings.actions";
 import type { SecurityInfo } from "../services/security-settings.services";
 
-export function useSecuritySettings() {
+interface UseSecuritySettingsProps {
+  initialSecurityInfo: SecurityInfo | null;
+  initialError?: string | null;
+}
+
+export function useSecuritySettings({
+  initialSecurityInfo,
+  initialError,
+}: UseSecuritySettingsProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(true);
-  const [securityInfo, setSecurityInfo] = useState<SecurityInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadSecurityInfo = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await getSecurityInfoAction();
-
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-
-      if (result.data) {
-        setSecurityInfo(result.data);
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error al cargar información";
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSecurityInfo();
-  }, [loadSecurityInfo]);
+  const refreshSecurityInfo = useCallback(() => {
+    startTransition(() => {
+      router.refresh();
+    });
+  }, [router]);
 
   const handleEnableTwoFactor = useCallback(() => {
     startTransition(async () => {
@@ -52,9 +37,9 @@ export function useSecuritySettings() {
       }
 
       toast.success(result.success);
-      await loadSecurityInfo();
+      router.refresh();
     });
-  }, [loadSecurityInfo]);
+  }, [router]);
 
   const handleDisableTwoFactor = useCallback(() => {
     startTransition(async () => {
@@ -66,21 +51,14 @@ export function useSecuritySettings() {
       }
 
       toast.success(result.success);
-      await loadSecurityInfo();
+      router.refresh();
     });
-  }, [loadSecurityInfo]);
-
-  const refreshSecurityInfo = useCallback(() => {
-    startTransition(async () => {
-      await loadSecurityInfo();
-    });
-  }, [loadSecurityInfo]);
+  }, [router]);
 
   return {
-    securityInfo,
-    isLoading,
+    securityInfo: initialSecurityInfo,
+    error: initialError,
     isPending,
-    error,
     handleEnableTwoFactor,
     handleDisableTwoFactor,
     refreshSecurityInfo,

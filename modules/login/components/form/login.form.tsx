@@ -22,8 +22,9 @@ import { cn } from "@/lib/utils";
 import { Loader2, LogIn, ShieldCheck, KeyRound, Wand2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { PasswordInput } from "@/components/ui/pasword-input";
-import { memo } from "react";
+import { memo, Suspense } from "react";
 import { TwoFactorDialogContent } from "@/modules/two-factor/components/form/two-factor.form";
+import { TwoFactorSkeleton } from "@/modules/two-factor/components/two-factor.skeleton";
 import { ReactivateAccountDialog } from "../reactivate-account.dialog";
 
 export const LoginForm = memo(function LoginForm() {
@@ -66,13 +67,15 @@ export const LoginForm = memo(function LoginForm() {
               Ingresa el código de seguridad enviado a tu correo
             </DialogDescription>
           </DialogHeader>
-          {twoFactor.email && (
-            <TwoFactorDialogContent
-              email={twoFactor.email}
-              onSuccess={completeTwoFactorLogin}
-              onBack={cancelTwoFactor}
-            />
-          )}
+          <Suspense fallback={<TwoFactorSkeleton />}>
+            {twoFactor.email && (
+              <TwoFactorDialogContent
+                email={twoFactor.email}
+                onSuccess={completeTwoFactorLogin}
+                onBack={cancelTwoFactor}
+              />
+            )}
+          </Suspense>
         </DialogContent>
       </Dialog>
 

@@ -1,45 +1,33 @@
 "use client";
 
-import { useState, useCallback, useEffect, useTransition } from "react";
+import { useCallback, useTransition, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  getActiveSessionsAction,
   revokeSessionAction,
   revokeAllOtherSessionsAction,
 } from "../actions/sessions.actions";
 import type { SessionData } from "../types/sessions.types";
 
-export function useSessions() {
-  const [sessions, setSessions] = useState<SessionData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface UseSessionsProps {
+  initialSessions: SessionData[];
+  initialError?: string | null;
+}
+
+export function useSessions({ initialSessions, initialError }: UseSessionsProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
-  const loadSessions = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const hasOtherSessions = useMemo(
+    () => initialSessions.filter((s) => !s.isCurrent).length > 0,
+    [initialSessions]
+  );
 
-    try {
-      const result = await getActiveSessionsAction();
-
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-
-      setSessions(result.sessions || []);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al cargar sesiones";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+  const refresh = useCallback(() => {
+    startTransition(() => {
+      router.refresh();
+    });
+  }, [router]);
 
   const revokeSession = useCallback(
     (sessionId: string) => {
@@ -53,7 +41,7 @@ export function useSessions() {
           }
 
           toast.success(result.success);
-          setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+          router.refresh();
         } catch (err) {
           const errorMessage =
             err instanceof Error ? err.message : "Error al cerrar sesión";
@@ -61,7 +49,7 @@ export function useSessions() {
         }
       });
     },
-    []
+    [router]
   );
 
   const revokeAllOther = useCallback(() => {
@@ -75,25 +63,22 @@ export function useSessions() {
         }
 
         toast.success(result.success);
-        setSessions((prev) => prev.filter((s) => s.isCurrent));
+        router.refresh();
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Error al cerrar sesiones";
         toast.error(errorMessage);
       }
     });
-  }, []);
-
-  const hasOtherSessions = sessions.filter((s) => !s.isCurrent).length > 0;
+  }, [router]);
 
   return {
-    sessions,
-    isLoading,
+    sessions: initialSessions,
+    error: initialError,
     isPending,
-    error,
     revokeSession,
     revokeAllOther,
-    refresh: loadSessions,
+    refresh,
     hasOtherSessions,
   };
 }
