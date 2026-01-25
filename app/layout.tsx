@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { auth } from "@/auth";
-import { CookieConsentBanner } from "@/components/cookie-consent/cookie-consent";
+import { CookieConsentWrapper } from "@/components/cookie-consent/cookie-consent-wrapper";
 import { SessionGuard } from "@/components/auth/session-guard";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -185,7 +185,7 @@ export default async function RootLayout({
             <SessionGuard>
               {children}
             </SessionGuard>
-            <CookieConsentBanner />
+            <CookieConsentWrapper />
           </SessionProvider>
           <Toaster position="bottom-right" richColors closeButton={true} duration={3000} />
         </ThemeProvider>

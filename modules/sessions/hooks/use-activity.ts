@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useTransition, useRef, useMemo } from "react";
+import { useCallback, useTransition, useMemo, useReducer } from "react";
 import { useRouter } from "next/navigation";
 import { getRecentActivityAction } from "../actions/sessions.actions";
 import type { ActivityData } from "../types/sessions.types";
@@ -12,6 +12,33 @@ interface UseRecentActivityProps {
   initialError?: string | null;
 }
 
+// Reducer para forzar actualizaciones de manera segura
+type ActivityState = {
+  extraActivities: ActivityData[];
+  currentPagination: PaginationMeta | null;
+};
+
+type ActivityAction =
+  | { type: "APPEND_ACTIVITIES"; activities: ActivityData[]; pagination: PaginationMeta }
+  | { type: "RESET"; pagination: PaginationMeta | null };
+
+function activityReducer(state: ActivityState, action: ActivityAction): ActivityState {
+  switch (action.type) {
+    case "APPEND_ACTIVITIES":
+      return {
+        extraActivities: [...state.extraActivities, ...action.activities],
+        currentPagination: action.pagination,
+      };
+    case "RESET":
+      return {
+        extraActivities: [],
+        currentPagination: action.pagination,
+      };
+    default:
+      return state;
+  }
+}
+
 export function useRecentActivity({
   initialActivities,
   initialPagination,
@@ -20,60 +47,54 @@ export function useRecentActivity({
   const router = useRouter();
   const [isLoadingMore, startTransition] = useTransition();
 
-  // useRef para acumular actividades adicionales sin causar re-renders
-  const extraActivitiesRef = useRef<ActivityData[]>([]);
-  const currentPaginationRef = useRef<PaginationMeta | null>(initialPagination);
-
-  // Forzar re-render solo cuando sea necesario
-  const forceUpdateRef = useRef(0);
+  // useReducer para manejar estado de manera segura (evita ref en useMemo deps)
+  const [state, dispatch] = useReducer(activityReducer, {
+    extraActivities: [],
+    currentPagination: initialPagination,
+  });
 
   // useMemo para combinar actividades iniciales con las cargadas posteriormente
   const activities = useMemo(() => {
-    // Leer forceUpdateRef para que el memo se invalide cuando cambie
-    void forceUpdateRef.current;
-    return [...initialActivities, ...extraActivitiesRef.current];
-  }, [initialActivities, forceUpdateRef.current]);
+    return [...initialActivities, ...state.extraActivities];
+  }, [initialActivities, state.extraActivities]);
 
   const hasMore = useMemo(() => {
-    void forceUpdateRef.current;
-    return currentPaginationRef.current?.hasNextPage ?? false;
-  }, [forceUpdateRef.current]);
+    return state.currentPagination?.hasNextPage ?? false;
+  }, [state.currentPagination?.hasNextPage]);
 
   const total = useMemo(() => {
-    void forceUpdateRef.current;
-    return currentPaginationRef.current?.total ?? initialPagination?.total ?? 0;
-  }, [initialPagination?.total, forceUpdateRef.current]);
+    return state.currentPagination?.total ?? initialPagination?.total ?? 0;
+  }, [state.currentPagination?.total, initialPagination?.total]);
 
   const refresh = useCallback(() => {
-    // Reset extra activities on refresh
-    extraActivitiesRef.current = [];
-    currentPaginationRef.current = initialPagination;
+    dispatch({ type: "RESET", pagination: initialPagination });
     startTransition(() => {
       router.refresh();
     });
   }, [router, initialPagination]);
 
   const loadMore = useCallback(() => {
-    if (!currentPaginationRef.current?.hasNextPage || isLoadingMore) return;
+    if (!state.currentPagination?.hasNextPage || isLoadingMore) return;
 
     startTransition(async () => {
       try {
-        const nextPage = currentPaginationRef.current!.page + 1;
+        const nextPage = state.currentPagination!.page + 1;
         const result = await getRecentActivityAction(nextPage, 10);
 
         if ("error" in result) {
           return;
         }
 
-        extraActivitiesRef.current = [...extraActivitiesRef.current, ...result.data];
-        currentPaginationRef.current = result.pagination;
-        // Forzar re-render
-        forceUpdateRef.current += 1;
+        dispatch({
+          type: "APPEND_ACTIVITIES",
+          activities: result.data,
+          pagination: result.pagination,
+        });
       } catch (err) {
         console.error("Error loading more activity:", err);
       }
     });
-  }, [isLoadingMore]);
+  }, [state.currentPagination, isLoadingMore]);
 
   return {
     activities,

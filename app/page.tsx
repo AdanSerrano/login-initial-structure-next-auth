@@ -119,7 +119,7 @@ export default function Home() {
               <AnimatedSection animation="fade-up" delay={100}>
                 <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                   Sistema de autenticación{" "}
-                  <span className="from-primary to-primary/60 bg-clip-text text-transparent">
+                  <span className="from-gray-100 to-gray-200 bg-clip-text  text-muted-foreground">
                     completo y seguro
                   </span>
                 </h1>

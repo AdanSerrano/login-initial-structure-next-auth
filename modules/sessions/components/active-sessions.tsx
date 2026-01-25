@@ -23,8 +23,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Monitor,
-  Smartphone,
-  Tablet,
   Globe,
   Clock,
   LogOut,
@@ -34,42 +32,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useSessions } from "../hooks/use-sessions";
-import type { DeviceType } from "@/lib/device-parser";
 import { formatSessionInfo, getDeviceLabel } from "@/lib/device-parser";
+import { formatRelativeTime } from "@/lib/date-utils";
+import { DeviceIcon } from "@/components/device-icon";
 import type { SessionData } from "../types/sessions.types";
 
 interface ActiveSessionsProps {
   initialSessions: SessionData[];
   initialError?: string | null;
-}
-
-function formatRelativeTime(date: Date): string {
-  const now = new Date();
-  const diff = now.getTime() - new Date(date).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "Ahora";
-  if (minutes < 60) return `Hace ${minutes} min`;
-  if (hours < 24) return `Hace ${hours}h`;
-  if (days < 7) return `Hace ${days}d`;
-  return new Intl.DateTimeFormat("es", { dateStyle: "short" }).format(
-    new Date(date)
-  );
-}
-
-function DeviceIcon({ deviceType }: { deviceType: DeviceType | null }) {
-  switch (deviceType) {
-    case "desktop":
-      return <Monitor className="h-5 w-5" />;
-    case "mobile":
-      return <Smartphone className="h-5 w-5" />;
-    case "tablet":
-      return <Tablet className="h-5 w-5" />;
-    default:
-      return <Globe className="h-5 w-5" />;
-  }
 }
 
 const SessionItem = memo(function SessionItem({
@@ -102,7 +72,7 @@ const SessionItem = memo(function SessionItem({
             : "bg-muted text-muted-foreground"
         }`}
       >
-        <DeviceIcon deviceType={session.deviceType} />
+        <DeviceIcon deviceType={session.deviceType} className="h-5 w-5" />
       </div>
 
       <div className="flex-1 min-w-0">

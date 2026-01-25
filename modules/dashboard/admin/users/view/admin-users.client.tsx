@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { AlertCircle, Ban, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -197,8 +197,8 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [activeDialog, setActiveDialog] = useState<AdminUsersDialogType>(null);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [isPending, setIsPending] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isPending, startActionTransition] = useTransition();
+  const [isNavigating, startNavigationTransition] = useTransition();
 
   // Datos del servidor (readonly, vienen del Server Component)
   const { users, stats, pagination, error } = initialData;
@@ -249,9 +249,9 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
       const queryString = params.toString();
       const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
-      setIsNavigating(true);
-      router.replace(newUrl, { scroll: false });
-      setTimeout(() => setIsNavigating(false), 100);
+      startNavigationTransition(() => {
+        router.replace(newUrl, { scroll: false });
+      });
     },
     [searchParams, pathname, router, urlState]
   );
@@ -327,121 +327,141 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
 
   // Actions que modifican datos (usan Server Actions y luego router.refresh)
   const blockUser = useCallback(
-    async (userId: string, reason?: string) => {
-      setIsPending(true);
-      try {
-        const result = await blockUserAction(userId, reason);
-        if (result.error) {
-          toast.error(result.error);
-        } else if (result.success) {
-          toast.success(result.success);
-          closeDialog();
-          router.refresh();
+    (userId: string, reason?: string) => {
+      startActionTransition(async () => {
+        try {
+          const result = await blockUserAction(userId, reason);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            toast.success(result.success);
+            closeDialog();
+            router.refresh();
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Error al bloquear usuario");
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al bloquear usuario");
-      } finally {
-        setIsPending(false);
-      }
+      });
     },
     [closeDialog, router]
   );
 
   const unblockUser = useCallback(
-    async (userId: string) => {
-      setIsPending(true);
-      try {
-        const result = await unblockUserAction(userId);
-        if (result.error) {
-          toast.error(result.error);
-        } else if (result.success) {
-          toast.success(result.success);
-          closeDialog();
-          router.refresh();
+    (userId: string) => {
+      startActionTransition(async () => {
+        try {
+          const result = await unblockUserAction(userId);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            toast.success(result.success);
+            closeDialog();
+            router.refresh();
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Error al desbloquear usuario");
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al desbloquear usuario");
-      } finally {
-        setIsPending(false);
-      }
+      });
     },
     [closeDialog, router]
   );
 
   const changeRole = useCallback(
-    async (userId: string, newRole: Role) => {
-      setIsPending(true);
-      try {
-        const result = await changeRoleAction(userId, newRole);
-        if (result.error) {
-          toast.error(result.error);
-        } else if (result.success) {
-          toast.success(result.success);
-          closeDialog();
-          router.refresh();
+    (userId: string, newRole: Role) => {
+      startActionTransition(async () => {
+        try {
+          const result = await changeRoleAction(userId, newRole);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            toast.success(result.success);
+            closeDialog();
+            router.refresh();
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Error al cambiar rol");
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al cambiar rol");
-      } finally {
-        setIsPending(false);
-      }
+      });
     },
     [closeDialog, router]
   );
 
   const deleteUser = useCallback(
-    async (userId: string, reason: string) => {
-      setIsPending(true);
-      try {
-        const result = await deleteUserAction(userId, reason);
-        if (result.error) {
-          toast.error(result.error);
-        } else if (result.success) {
-          toast.success(result.success);
-          closeDialog();
-          router.refresh();
+    (userId: string, reason: string) => {
+      startActionTransition(async () => {
+        try {
+          const result = await deleteUserAction(userId, reason);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            toast.success(result.success);
+            closeDialog();
+            router.refresh();
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Error al eliminar usuario");
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al eliminar usuario");
-      } finally {
-        setIsPending(false);
-      }
+      });
     },
     [closeDialog, router]
   );
 
   const restoreUser = useCallback(
-    async (userId: string) => {
-      setIsPending(true);
-      try {
-        const result = await restoreUserAction(userId);
-        if (result.error) {
-          toast.error(result.error);
-        } else if (result.success) {
-          toast.success(result.success);
-          closeDialog();
-          router.refresh();
+    (userId: string) => {
+      startActionTransition(async () => {
+        try {
+          const result = await restoreUserAction(userId);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            toast.success(result.success);
+            closeDialog();
+            router.refresh();
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Error al restaurar usuario");
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al restaurar usuario");
-      } finally {
-        setIsPending(false);
-      }
+      });
     },
     [closeDialog, router]
   );
 
   const bulkBlockUsers = useCallback(
-    async (reason?: string) => {
+    (reason?: string) => {
       const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
       if (selectedIds.length === 0) {
         toast.error("No hay usuarios seleccionados");
         return;
       }
 
-      setIsPending(true);
+      startActionTransition(async () => {
+        try {
+          const result = await bulkBlockUsersAction(selectedIds, reason);
+          if (result.error) {
+            toast.error(result.error);
+          } else if (result.success) {
+            toast.success(result.success);
+            setRowSelection({});
+            router.refresh();
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Error al bloquear usuarios");
+        }
+      });
+    },
+    [rowSelection, router]
+  );
+
+  const bulkDeleteUsers = useCallback(() => {
+    const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
+    if (selectedIds.length === 0) {
+      toast.error("No hay usuarios seleccionados");
+      return;
+    }
+
+    startActionTransition(async () => {
       try {
-        const result = await bulkBlockUsersAction(selectedIds, reason);
+        const result = await bulkDeleteUsersAction(selectedIds);
         if (result.error) {
           toast.error(result.error);
         } else if (result.success) {
@@ -450,36 +470,9 @@ export function AdminUsersClient({ initialData }: AdminUsersClientProps) {
           router.refresh();
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error al bloquear usuarios");
-      } finally {
-        setIsPending(false);
+        toast.error(err instanceof Error ? err.message : "Error al eliminar usuarios");
       }
-    },
-    [rowSelection, router]
-  );
-
-  const bulkDeleteUsers = useCallback(async () => {
-    const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
-    if (selectedIds.length === 0) {
-      toast.error("No hay usuarios seleccionados");
-      return;
-    }
-
-    setIsPending(true);
-    try {
-      const result = await bulkDeleteUsersAction(selectedIds);
-      if (result.error) {
-        toast.error(result.error);
-      } else if (result.success) {
-        toast.success(result.success);
-        setRowSelection({});
-        router.refresh();
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al eliminar usuarios");
-    } finally {
-      setIsPending(false);
-    }
+    });
   }, [rowSelection, router]);
 
   // Ref para acciones estables

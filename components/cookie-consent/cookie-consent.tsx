@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,60 +34,183 @@ const defaultPreferences: CookiePreferences = {
   functional: false,
 };
 
-export function CookieConsentBanner() {
-  const [showBanner, setShowBanner] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [preferences, setPreferences] =
-    useState<CookiePreferences>(defaultPreferences);
+// Store for cookie consent state
+type CookieConsentState = {
+  hasConsent: boolean;
+  preferences: CookiePreferences;
+  showBanner: boolean;
+  showSettings: boolean;
+};
 
-  useEffect(() => {
-    const consent = Cookies.get(COOKIE_CONSENT_KEY);
-    if (!consent) {
-      const timer = setTimeout(() => setShowBanner(true), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      const savedPreferences = Cookies.get(COOKIE_PREFERENCES_KEY);
-      if (savedPreferences) {
-        try {
-          setPreferences(JSON.parse(savedPreferences));
-        } catch {
-          setPreferences(defaultPreferences);
-        }
+let cookieConsentState: CookieConsentState = {
+  hasConsent: false,
+  preferences: defaultPreferences,
+  showBanner: false,
+  showSettings: false,
+};
+
+const listeners = new Set<() => void>();
+let initializationTimer: ReturnType<typeof setTimeout> | null = null;
+
+function emitChange() {
+  listeners.forEach((listener) => listener());
+}
+
+function readCookieState(): { hasConsent: boolean; preferences: CookiePreferences } {
+  const consent = Cookies.get(COOKIE_CONSENT_KEY);
+  const hasConsent = !!consent;
+
+  let preferences = defaultPreferences;
+  if (hasConsent) {
+    const savedPreferences = Cookies.get(COOKIE_PREFERENCES_KEY);
+    if (savedPreferences) {
+      try {
+        preferences = JSON.parse(savedPreferences);
+      } catch {
+        preferences = defaultPreferences;
       }
     }
-  }, []);
+  }
 
-  const saveConsent = (prefs: CookiePreferences) => {
-    Cookies.set(COOKIE_CONSENT_KEY, "true", { expires: COOKIE_MAX_AGE });
-    Cookies.set(COOKIE_PREFERENCES_KEY, JSON.stringify(prefs), {
-      expires: COOKIE_MAX_AGE,
-    });
-    setPreferences(prefs);
-    setShowBanner(false);
-    setShowSettings(false);
+  return { hasConsent, preferences };
+}
+
+function initializeCookieState() {
+  const { hasConsent, preferences } = readCookieState();
+
+  if (!hasConsent && !cookieConsentState.showBanner) {
+    // Show banner after delay if no consent
+    initializationTimer = setTimeout(() => {
+      cookieConsentState = {
+        ...cookieConsentState,
+        hasConsent: false,
+        preferences: defaultPreferences,
+        showBanner: true,
+      };
+      emitChange();
+    }, 1000);
+  } else {
+    cookieConsentState = {
+      ...cookieConsentState,
+      hasConsent,
+      preferences,
+    };
+    emitChange();
+  }
+}
+
+function subscribeToCookieConsent(callback: () => void): () => void {
+  listeners.add(callback);
+
+  // Initialize on first subscription
+  if (listeners.size === 1) {
+    initializeCookieState();
+  }
+
+  return () => {
+    listeners.delete(callback);
+    if (listeners.size === 0 && initializationTimer) {
+      clearTimeout(initializationTimer);
+      initializationTimer = null;
+    }
   };
+}
 
-  const acceptAll = () => {
+function getCookieConsentSnapshot(): CookieConsentState {
+  return cookieConsentState;
+}
+
+// Cached server snapshot to avoid infinite loop
+const SERVER_SNAPSHOT: CookieConsentState = {
+  hasConsent: false,
+  preferences: defaultPreferences,
+  showBanner: false,
+  showSettings: false,
+};
+
+function getCookieConsentServerSnapshot(): CookieConsentState {
+  return SERVER_SNAPSHOT;
+}
+
+function setShowSettings(show: boolean) {
+  cookieConsentState = { ...cookieConsentState, showSettings: show };
+  emitChange();
+}
+
+function setPreferences(preferences: CookiePreferences) {
+  cookieConsentState = { ...cookieConsentState, preferences };
+  emitChange();
+}
+
+function saveConsent(prefs: CookiePreferences) {
+  Cookies.set(COOKIE_CONSENT_KEY, "true", { expires: COOKIE_MAX_AGE });
+  Cookies.set(COOKIE_PREFERENCES_KEY, JSON.stringify(prefs), {
+    expires: COOKIE_MAX_AGE,
+  });
+  cookieConsentState = {
+    hasConsent: true,
+    preferences: prefs,
+    showBanner: false,
+    showSettings: false,
+  };
+  emitChange();
+}
+
+function resetConsent() {
+  Cookies.remove(COOKIE_CONSENT_KEY);
+  Cookies.remove(COOKIE_PREFERENCES_KEY);
+  cookieConsentState = {
+    hasConsent: false,
+    preferences: defaultPreferences,
+    showBanner: false,
+    showSettings: false,
+  };
+  emitChange();
+  window.location.reload();
+}
+
+export function CookieConsentBanner() {
+  const state = useSyncExternalStore(
+    subscribeToCookieConsent,
+    getCookieConsentSnapshot,
+    getCookieConsentServerSnapshot
+  );
+
+  const { showBanner, showSettings, preferences } = state;
+
+  const handleAcceptAll = useCallback(() => {
     saveConsent({
       necessary: true,
       analytics: true,
       marketing: true,
       functional: true,
     });
-  };
+  }, []);
 
-  const acceptNecessary = () => {
+  const handleAcceptNecessary = useCallback(() => {
     saveConsent({
       necessary: true,
       analytics: false,
       marketing: false,
       functional: false,
     });
-  };
+  }, []);
 
-  const savePreferences = () => {
+  const handleSavePreferences = useCallback(() => {
     saveConsent(preferences);
-  };
+  }, [preferences]);
+
+  const handleToggleSettings = useCallback((show: boolean) => {
+    setShowSettings(show);
+  }, []);
+
+  const handleAnalyticsChange = useCallback((checked: boolean) => {
+    setPreferences({ ...preferences, analytics: checked });
+  }, [preferences]);
+
+  const handleFunctionalChange = useCallback((checked: boolean) => {
+    setPreferences({ ...preferences, functional: checked });
+  }, [preferences]);
 
   return (
     <Drawer open={showBanner} dismissible={false} modal={true}>
@@ -160,9 +283,7 @@ export function CookieConsentBanner() {
                   </div>
                   <Switch
                     checked={preferences.analytics}
-                    onCheckedChange={(checked) =>
-                      setPreferences((prev) => ({ ...prev, analytics: checked }))
-                    }
+                    onCheckedChange={handleAnalyticsChange}
                   />
                 </div>
 
@@ -180,9 +301,7 @@ export function CookieConsentBanner() {
                   </div>
                   <Switch
                     checked={preferences.functional}
-                    onCheckedChange={(checked) =>
-                      setPreferences((prev) => ({ ...prev, functional: checked }))
-                    }
+                    onCheckedChange={handleFunctionalChange}
                   />
                 </div>
               </div>
@@ -195,18 +314,18 @@ export function CookieConsentBanner() {
                 <Button
                   variant="outline"
                   className="sm:w-auto"
-                  onClick={() => setShowSettings(true)}
+                  onClick={() => handleToggleSettings(true)}
                 >
                   Configurar
                 </Button>
                 <Button
                   variant="outline"
                   className="sm:w-auto"
-                  onClick={acceptNecessary}
+                  onClick={handleAcceptNecessary}
                 >
                   Solo necesarias
                 </Button>
-                <Button className="sm:flex-1 sm:max-w-[200px]" onClick={acceptAll}>
+                <Button className="sm:flex-1 sm:max-w-[200px]" onClick={handleAcceptAll}>
                   Aceptar todas
                 </Button>
               </div>
@@ -215,14 +334,14 @@ export function CookieConsentBanner() {
                 <Button
                   variant="outline"
                   className="sm:w-auto"
-                  onClick={() => setShowSettings(false)}
+                  onClick={() => handleToggleSettings(false)}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Volver
                 </Button>
                 <Button
                   className="sm:flex-1 sm:max-w-[200px]"
-                  onClick={savePreferences}
+                  onClick={handleSavePreferences}
                 >
                   Guardar preferencias
                 </Button>
@@ -236,33 +355,15 @@ export function CookieConsentBanner() {
 }
 
 export function useCookieConsent() {
-  const [preferences, setPreferences] =
-    useState<CookiePreferences>(defaultPreferences);
-  const [hasConsent, setHasConsent] = useState(false);
+  const state = useSyncExternalStore(
+    subscribeToCookieConsent,
+    getCookieConsentSnapshot,
+    getCookieConsentServerSnapshot
+  );
 
-  useEffect(() => {
-    const consent = Cookies.get(COOKIE_CONSENT_KEY);
-    setHasConsent(!!consent);
-
-    if (consent) {
-      const savedPreferences = Cookies.get(COOKIE_PREFERENCES_KEY);
-      if (savedPreferences) {
-        try {
-          setPreferences(JSON.parse(savedPreferences));
-        } catch {
-          setPreferences(defaultPreferences);
-        }
-      }
-    }
-  }, []);
-
-  const resetConsent = () => {
-    Cookies.remove(COOKIE_CONSENT_KEY);
-    Cookies.remove(COOKIE_PREFERENCES_KEY);
-    setHasConsent(false);
-    setPreferences(defaultPreferences);
-    window.location.reload();
+  return {
+    preferences: state.preferences,
+    hasConsent: state.hasConsent,
+    resetConsent,
   };
-
-  return { preferences, hasConsent, resetConsent };
 }

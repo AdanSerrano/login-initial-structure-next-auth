@@ -28,13 +28,11 @@ import {
   Unlock,
   UserPlus,
   Wand2,
-  Smartphone,
-  Monitor,
-  Tablet,
 } from "lucide-react";
 import { useRecentActivity } from "../hooks/use-activity";
+import { formatRelativeTime } from "@/lib/date-utils";
+import { DeviceIcon } from "@/components/device-icon";
 import type { ActivityData } from "../types/sessions.types";
-import type { DeviceType } from "@/lib/device-parser";
 import type { PaginationMeta } from "@/types/pagination.types";
 
 export interface RecentActivityProps {
@@ -81,35 +79,6 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   MAGIC_LINK_LOGIN: <Wand2 className="h-4 w-4" />,
 };
 
-function formatRelativeTime(date: Date): string {
-  const now = new Date();
-  const diff = now.getTime() - new Date(date).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "Hace un momento";
-  if (minutes < 60) return `Hace ${minutes} min`;
-  if (hours < 24) return `Hace ${hours}h`;
-  if (days < 7) return `Hace ${days}d`;
-  return new Intl.DateTimeFormat("es", { dateStyle: "short" }).format(
-    new Date(date)
-  );
-}
-
-function DeviceIcon({ deviceType }: { deviceType: DeviceType | undefined }) {
-  switch (deviceType) {
-    case "desktop":
-      return <Monitor className="h-3 w-3" />;
-    case "mobile":
-      return <Smartphone className="h-3 w-3" />;
-    case "tablet":
-      return <Tablet className="h-3 w-3" />;
-    default:
-      return <Globe className="h-3 w-3" />;
-  }
-}
-
 const ActivityItem = memo(function ActivityItem({
   activity,
 }: {
@@ -148,7 +117,7 @@ const ActivityItem = memo(function ActivityItem({
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {activity.deviceType && (
             <span className="flex items-center gap-1">
-              <DeviceIcon deviceType={activity.deviceType} />
+              <DeviceIcon deviceType={activity.deviceType} className="h-3 w-3" />
               {activity.browser}
             </span>
           )}
@@ -165,7 +134,7 @@ const ActivityItem = memo(function ActivityItem({
       </div>
       <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
         <Clock className="h-3 w-3" />
-        <span>{formatRelativeTime(activity.createdAt)}</span>
+        <span>{formatRelativeTime(activity.createdAt, "Hace un momento")}</span>
       </div>
     </div>
   );
