@@ -59,7 +59,12 @@ export const AnimatedBenefitsList = memo(function AnimatedBenefitsList({
   return (
     <>
       {childArray.map((child, index) => (
-        <AnimatedSection key={index} animation="fade-left" delay={index * 80}>
+        <AnimatedSection
+          key={index}
+          as="li"
+          animation="fade-left"
+          delay={index * 80}
+        >
           {child}
         </AnimatedSection>
       ))}

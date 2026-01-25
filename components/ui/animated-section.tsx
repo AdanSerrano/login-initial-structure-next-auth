@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 type AnimationType = "fade-up" | "fade-down" | "fade-left" | "fade-right" | "fade" | "scale" | "slide-up";
 
 interface AnimatedSectionProps {
+  as?: "div" | "li" | "span" | "section" | "article";
   children: React.ReactNode;
   className?: string;
   animation?: AnimationType;
@@ -48,6 +49,7 @@ const animationStyles: Record<AnimationType, { initial: string; animate: string 
 };
 
 export const AnimatedSection = memo(function AnimatedSection({
+  as: Component = "div",
   children,
   className,
   animation = "fade-up",
@@ -56,7 +58,7 @@ export const AnimatedSection = memo(function AnimatedSection({
   threshold = 0.1,
   triggerOnce = true,
 }: AnimatedSectionProps) {
-  const { ref, hasBeenInView } = useInView<HTMLDivElement>({
+  const { ref, hasBeenInView } = useInView<HTMLElement>({
     threshold,
     triggerOnce,
   });
@@ -72,8 +74,8 @@ export const AnimatedSection = memo(function AnimatedSection({
   );
 
   return (
-    <div
-      ref={ref}
+    <Component
+      ref={ref as React.RefObject<HTMLDivElement> & React.RefObject<HTMLLIElement>}
       className={cn(
         "transition-all ease-out",
         hasBeenInView ? styles.animate : styles.initial,
@@ -82,7 +84,7 @@ export const AnimatedSection = memo(function AnimatedSection({
       style={transitionStyle}
     >
       {children}
-    </div>
+    </Component>
   );
 });
 

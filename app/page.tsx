@@ -252,12 +252,12 @@ export default function Home() {
                 <ul className="space-y-2 sm:space-y-3">
                   <AnimatedBenefitsList>
                     {benefits.map((benefit) => (
-                      <li key={benefit} className="flex items-center gap-3">
-                        <div className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <span key={benefit} className="flex items-center gap-3">
+                        <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
                           <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                        </div>
+                        </span>
                         <span className="text-xs sm:text-sm">{benefit}</span>
-                      </li>
+                      </span>
                     ))}
                   </AnimatedBenefitsList>
                 </ul>
