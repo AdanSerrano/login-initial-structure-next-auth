@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { CookieConsentWrapper } from "@/components/cookie-consent/cookie-consent-wrapper";
 import { SessionGuard } from "@/components/auth/session-guard";
 import { ThemeProvider } from "@/components/theme-provider";
+import { RootJsonLd } from "@/lib/seo/json-ld";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -170,6 +171,7 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Nexus" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <RootJsonLd />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
