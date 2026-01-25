@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/landing/header";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: APP_URL,
+  },
+};
 import { HeroButtons } from "@/components/landing/hero-buttons";
 import { CtaButtons, BenefitsButton } from "@/components/landing/cta-buttons";
 import {

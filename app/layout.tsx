@@ -113,19 +113,11 @@ export const metadata: Metadata = {
   },
 
   alternates: {
-    canonical: APP_URL,
     languages: {
       "es-ES": APP_URL,
       "en-US": `${APP_URL}/en`,
     },
   },
-
-  verification: {
-    // Agregar cuando tengas los códigos de verificación
-    // google: "tu-codigo-de-verificacion-google",
-    // yandex: "tu-codigo-de-verificacion-yandex",
-  },
-
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

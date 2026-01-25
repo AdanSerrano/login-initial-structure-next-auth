@@ -1,9 +1,28 @@
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header-new";
 import { cookies } from "next/headers";
+
+// Metadata para páginas protegidas - NO deben ser indexadas
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
+  // Eliminar canonical para páginas protegidas
+  alternates: {
+    canonical: null,
+  },
+};
 
 export default async function ProtectedLayout({
   children,
