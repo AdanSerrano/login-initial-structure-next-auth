@@ -103,12 +103,18 @@ export function useDataTableState<TData>(props: CustomDataTableProps<TData>) {
     callbacksRef.current.onSelectionChange?.({});
   }, []);
 
-  // isRowSelected MUST be reactive - it determines if a row shows as selected
+  // Selection state object - stable reference when selection doesn't change
+  // Each row will check its own state using this object directly
+  const selectionState = useMemo(
+    () => selection?.selectedRows ?? {},
+    [selection?.selectedRows]
+  );
+
+  // isRowSelected - stable callback that uses the selection state
+  // This is kept for backwards compatibility but rows should use selectionState directly
   const isRowSelected = useCallback(
-    (rowId: string) => {
-      return !!selection?.selectedRows[rowId];
-    },
-    [selection?.selectedRows] // Must depend on selectedRows to re-render when selection changes
+    (rowId: string) => !!selectionState[rowId],
+    [selectionState]
   );
 
   const isAllSelected = useMemo(() => {
@@ -177,12 +183,16 @@ export function useDataTableState<TData>(props: CustomDataTableProps<TData>) {
     callbacksRef.current.onExpansionChange?.({});
   }, []);
 
-  // isRowExpanded MUST be reactive - it determines if expanded content shows
+  // Expansion state object - stable reference when expansion doesn't change
+  const expansionState = useMemo(
+    () => expansion?.expandedRows ?? {},
+    [expansion?.expandedRows]
+  );
+
+  // isRowExpanded - stable callback for backwards compatibility
   const isRowExpanded = useCallback(
-    (rowId: string) => {
-      return !!expansion?.expandedRows[rowId];
-    },
-    [expansion?.expandedRows] // Must depend on expandedRows to re-render when expansion changes
+    (rowId: string) => !!expansionState[rowId],
+    [expansionState]
   );
 
   // Sorting handlers
@@ -314,6 +324,7 @@ export function useDataTableState<TData>(props: CustomDataTableProps<TData>) {
     selectAllRows,
     clearSelection,
     isRowSelected,
+    selectionState, // Direct state object for optimized row rendering
     isAllSelected,
     isSomeSelected,
     selectedCount,
@@ -324,6 +335,7 @@ export function useDataTableState<TData>(props: CustomDataTableProps<TData>) {
     expandAllRows,
     collapseAllRows,
     isRowExpanded,
+    expansionState, // Direct state object for optimized row rendering
 
     // Sorting
     toggleSort,

@@ -19,8 +19,9 @@ interface TableRowProps<TData> {
   selection?: SelectionConfig<TData>;
   expansion?: ExpansionConfig<TData>;
   style?: StyleConfig;
-  isSelected: boolean;
-  isExpanded: boolean;
+  // State objects for direct lookup - avoids callback recreation
+  selectionState: Record<string, boolean>;
+  expansionState: Record<string, boolean>;
   onToggleSelection: (rowId: string) => void;
   onToggleExpansion: (rowId: string) => void;
   onRowClick?: (row: TData, event: React.MouseEvent) => void;
@@ -177,8 +178,8 @@ function TableRowInner<TData>({
   selection,
   expansion,
   style,
-  isSelected,
-  isExpanded,
+  selectionState,
+  expansionState,
   onToggleSelection,
   onToggleExpansion,
   onRowClick,
@@ -187,6 +188,10 @@ function TableRowInner<TData>({
   isPending,
   rowClassName,
 }: TableRowProps<TData>) {
+  // Derive selection/expansion from state objects - this is the key optimization
+  // Each row only re-renders when ITS OWN state changes
+  const isSelected = !!selectionState[rowId];
+  const isExpanded = !!expansionState[rowId];
   const clickTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCountRef = useRef(0);
 
@@ -357,8 +362,9 @@ function TableRowInner<TData>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isExpanded, expansion?.renderContent]);
 
-  // Pre-compute cell data for memoization - avoids recalculating in each cell
-  const cellsData = useMemo(() => {
+  // Pre-compute cell STYLES only - these don't depend on row state
+  // This is stable across selection/expansion changes
+  const cellStyles = useMemo(() => {
     return columns.map((column) => {
       const cellStyle: React.CSSProperties = {};
       if (column.width) {
@@ -384,24 +390,17 @@ function TableRowInner<TData>({
           )
         : "";
 
-      // Pre-render cell content
-      const content = column.cell({
-        row,
-        rowIndex,
-        isSelected,
-        isExpanded,
-      });
-
       return {
         columnId: column.id,
-        content,
         alignClass,
         pinnedClass,
         cellClassName: column.cellClassName,
         cellStyle,
+        // Store the cell function for lazy evaluation
+        cellFn: column.cell,
       };
     });
-  }, [columns, row, rowIndex, isSelected, isExpanded]);
+  }, [columns]); // Only recalculate when columns change
 
   return (
     <Fragment>
@@ -438,12 +437,17 @@ function TableRowInner<TData>({
           />
         )}
 
-        {/* Data cells - memoized individually for better performance */}
-        {cellsData.map((cellData) => (
+        {/* Data cells - styles are pre-computed, content rendered lazily */}
+        {cellStyles.map((cellData) => (
           <DataCell
             key={cellData.columnId}
             columnId={cellData.columnId}
-            content={cellData.content}
+            content={cellData.cellFn({
+              row,
+              rowIndex,
+              isSelected,
+              isExpanded,
+            })}
             density={density}
             alignClass={cellData.alignClass}
             pinnedClass={cellData.pinnedClass}
@@ -465,14 +469,22 @@ function TableRowInner<TData>({
   );
 }
 
-// Custom comparison for memo - optimized for performance
+// Custom comparison for memo - KEY OPTIMIZATION
+// Only re-render when THIS ROW's state changes, not when any selection changes
 function arePropsEqual<TData>(
   prevProps: TableRowProps<TData>,
   nextProps: TableRowProps<TData>
 ): boolean {
-  // Fast path: check most frequently changing props first
-  if (prevProps.isSelected !== nextProps.isSelected) return false;
-  if (prevProps.isExpanded !== nextProps.isExpanded) return false;
+  // Fast path: check if THIS ROW's selection/expansion state changed
+  // This is the key optimization - we don't re-render if other rows change
+  const prevSelected = !!prevProps.selectionState[prevProps.rowId];
+  const nextSelected = !!nextProps.selectionState[nextProps.rowId];
+  if (prevSelected !== nextSelected) return false;
+
+  const prevExpanded = !!prevProps.expansionState[prevProps.rowId];
+  const nextExpanded = !!nextProps.expansionState[nextProps.rowId];
+  if (prevExpanded !== nextExpanded) return false;
+
   if (prevProps.isPending !== nextProps.isPending) return false;
 
   // Check identity props

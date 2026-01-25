@@ -26,8 +26,9 @@ interface TableBodyProps<TData> {
   isPending?: boolean;
   emptyMessage?: string;
   emptyIcon?: React.ReactNode;
-  isRowSelected: (rowId: string) => boolean;
-  isRowExpanded: (rowId: string) => boolean;
+  // State objects for direct lookup (more efficient than callbacks)
+  selectionState: Record<string, boolean>;
+  expansionState: Record<string, boolean>;
   onToggleSelection: (rowId: string) => void;
   onToggleExpansion: (rowId: string) => void;
   onRowClick?: (row: TData, event: React.MouseEvent) => void;
@@ -144,8 +145,8 @@ function TableBodyInner<TData>({
   isPending,
   emptyMessage = "No hay datos disponibles",
   emptyIcon,
-  isRowSelected,
-  isRowExpanded,
+  selectionState,
+  expansionState,
   onToggleSelection,
   onToggleExpansion,
   onRowClick,
@@ -195,15 +196,13 @@ function TableBodyInner<TData>({
     [totalColumns, emptyMessage, emptyIcon]
   );
 
-  // Render rows with optimized selection state lookup
-  // CustomTableRow is already memoized, so we render directly
+  // Render rows - each row checks its own selection/expansion state
+  // This avoids re-rendering ALL rows when one selection changes
   const renderedRows = useMemo(() => {
     if (isLoading || !hasRows) return null;
 
     return data.map((row, rowIndex) => {
       const rowId = getRowId(row);
-      const isSelected = isRowSelected(rowId);
-      const isExpanded = isRowExpanded(rowId);
       const rowClass = getRowClassNameValue(row, rowIndex);
 
       return (
@@ -216,8 +215,8 @@ function TableBodyInner<TData>({
           selection={selection}
           expansion={expansion}
           style={style}
-          isSelected={isSelected}
-          isExpanded={isExpanded}
+          selectionState={selectionState}
+          expansionState={expansionState}
           onToggleSelection={onToggleSelection}
           onToggleExpansion={onToggleExpansion}
           onRowClick={onRowClick}
@@ -233,13 +232,13 @@ function TableBodyInner<TData>({
     hasRows,
     data,
     getRowId,
-    isRowSelected,
-    isRowExpanded,
     getRowClassNameValue,
     columns,
     selection,
     expansion,
     style,
+    selectionState,
+    expansionState,
     onToggleSelection,
     onToggleExpansion,
     onRowClick,
@@ -282,15 +281,14 @@ function areBodyPropsEqual<TData>(
     prevProps.selection?.mode === nextProps.selection?.mode &&
     prevProps.selection?.showCheckbox === nextProps.selection?.showCheckbox &&
     prevProps.selection?.selectOnRowClick === nextProps.selection?.selectOnRowClick &&
-    prevProps.selection?.selectedRows === nextProps.selection?.selectedRows &&
     prevProps.expansion?.enabled === nextProps.expansion?.enabled &&
-    prevProps.expansion?.expandedRows === nextProps.expansion?.expandedRows &&
+    // Compare state objects by reference (they're memoized in the hook)
+    prevProps.selectionState === nextProps.selectionState &&
+    prevProps.expansionState === nextProps.expansionState &&
     prevProps.onToggleSelection === nextProps.onToggleSelection &&
     prevProps.onToggleExpansion === nextProps.onToggleExpansion &&
     prevProps.onRowClick === nextProps.onRowClick &&
-    prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
-    prevProps.isRowSelected === nextProps.isRowSelected &&
-    prevProps.isRowExpanded === nextProps.isRowExpanded
+    prevProps.onRowDoubleClick === nextProps.onRowDoubleClick
   );
 }
 

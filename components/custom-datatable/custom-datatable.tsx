@@ -94,6 +94,7 @@ function CustomDataTableInner<TData>(
     selectAllRows,
     clearSelection,
     isRowSelected,
+    selectionState,
     isAllSelected,
     isSomeSelected,
     selectedCount,
@@ -102,6 +103,7 @@ function CustomDataTableInner<TData>(
     expandAllRows,
     collapseAllRows,
     isRowExpanded,
+    expansionState,
     toggleSort,
     getSortDirection,
     goToPage,
@@ -480,7 +482,7 @@ function CustomDataTableInner<TData>(
     ]
   );
 
-  // Memoized body props
+  // Memoized body props - uses state objects for optimized row rendering
   const bodyProps = useMemo(
     () => ({
       data: processedData,
@@ -493,8 +495,8 @@ function CustomDataTableInner<TData>(
       isPending,
       emptyMessage,
       emptyIcon,
-      isRowSelected,
-      isRowExpanded,
+      selectionState,
+      expansionState,
       onToggleSelection: toggleRowSelection,
       onToggleExpansion: toggleRowExpansion,
       onRowClick,
@@ -515,8 +517,8 @@ function CustomDataTableInner<TData>(
       isPending,
       emptyMessage,
       emptyIcon,
-      isRowSelected,
-      isRowExpanded,
+      selectionState,
+      expansionState,
       toggleRowSelection,
       toggleRowExpansion,
       onRowClick,
