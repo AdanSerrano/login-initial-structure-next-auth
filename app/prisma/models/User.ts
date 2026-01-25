@@ -343,6 +343,7 @@ export type UserWhereInput = {
   twoFactorConfirmation?: Prisma.XOR<Prisma.TwoFactorConfirmationNullableScalarRelationFilter, Prisma.twoFactorConfirmationWhereInput> | null
   auditLogs?: Prisma.AuditLogListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
+  files?: Prisma.FileUploadListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -370,6 +371,7 @@ export type UserOrderByWithRelationInput = {
   twoFactorConfirmation?: Prisma.twoFactorConfirmationOrderByWithRelationInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   sessions?: Prisma.SessionOrderByRelationAggregateInput
+  files?: Prisma.FileUploadOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -400,6 +402,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   twoFactorConfirmation?: Prisma.XOR<Prisma.TwoFactorConfirmationNullableScalarRelationFilter, Prisma.twoFactorConfirmationWhereInput> | null
   auditLogs?: Prisma.AuditLogListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
+  files?: Prisma.FileUploadListRelationFilter
 }, "id" | "userName" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -483,6 +486,7 @@ export type UserCreateInput = {
   twoFactorConfirmation?: Prisma.twoFactorConfirmationCreateNestedOneWithoutUserInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -510,6 +514,7 @@ export type UserUncheckedCreateInput = {
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedCreateNestedOneWithoutUserInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -537,6 +542,7 @@ export type UserUpdateInput = {
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUpdateOneWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -564,6 +570,7 @@ export type UserUncheckedUpdateInput = {
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedUpdateOneWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -819,6 +826,20 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
+export type UserCreateNestedOneWithoutFilesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFilesInput, Prisma.UserUncheckedCreateWithoutFilesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFilesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutFilesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFilesInput, Prisma.UserUncheckedCreateWithoutFilesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFilesInput
+  upsert?: Prisma.UserUpsertWithoutFilesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFilesInput, Prisma.UserUpdateWithoutFilesInput>, Prisma.UserUncheckedUpdateWithoutFilesInput>
+}
+
 export type UserCreateWithoutTwoFactorConfirmationInput = {
   id?: string
   userName?: string | null
@@ -843,6 +864,7 @@ export type UserCreateWithoutTwoFactorConfirmationInput = {
   updatedAt?: Date | string
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutTwoFactorConfirmationInput = {
@@ -869,6 +891,7 @@ export type UserUncheckedCreateWithoutTwoFactorConfirmationInput = {
   updatedAt?: Date | string
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutTwoFactorConfirmationInput = {
@@ -911,6 +934,7 @@ export type UserUpdateWithoutTwoFactorConfirmationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTwoFactorConfirmationInput = {
@@ -937,6 +961,7 @@ export type UserUncheckedUpdateWithoutTwoFactorConfirmationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -963,6 +988,7 @@ export type UserCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationCreateNestedOneWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -989,6 +1015,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedCreateNestedOneWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -1031,6 +1058,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUpdateOneWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -1057,6 +1085,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedUpdateOneWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1083,6 +1112,7 @@ export type UserCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationCreateNestedOneWithoutUserInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1109,6 +1139,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedCreateNestedOneWithoutUserInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  files?: Prisma.FileUploadUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1151,6 +1182,7 @@ export type UserUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUpdateOneWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1177,6 +1209,131 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedUpdateOneWithoutUserNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  files?: Prisma.FileUploadUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutFilesInput = {
+  id?: string
+  userName?: string | null
+  name?: string | null
+  email?: string | null
+  emailVerified?: Date | string | null
+  image?: string | null
+  password?: string | null
+  role?: $Enums.Role
+  isTwoFactorEnabled?: boolean
+  failedLoginAttempts?: number
+  lockedUntil?: Date | string | null
+  lastFailedLogin?: Date | string | null
+  isBlocked?: boolean
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  blockedServices?: Prisma.UserCreateblockedServicesInput | string[]
+  deletedAt?: Date | string | null
+  scheduledDeletionDate?: Date | string | null
+  deletionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  twoFactorConfirmation?: Prisma.twoFactorConfirmationCreateNestedOneWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutFilesInput = {
+  id?: string
+  userName?: string | null
+  name?: string | null
+  email?: string | null
+  emailVerified?: Date | string | null
+  image?: string | null
+  password?: string | null
+  role?: $Enums.Role
+  isTwoFactorEnabled?: boolean
+  failedLoginAttempts?: number
+  lockedUntil?: Date | string | null
+  lastFailedLogin?: Date | string | null
+  isBlocked?: boolean
+  blockedAt?: Date | string | null
+  blockedReason?: string | null
+  blockedServices?: Prisma.UserCreateblockedServicesInput | string[]
+  deletedAt?: Date | string | null
+  scheduledDeletionDate?: Date | string | null
+  deletionReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedCreateNestedOneWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutFilesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFilesInput, Prisma.UserUncheckedCreateWithoutFilesInput>
+}
+
+export type UserUpsertWithoutFilesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFilesInput, Prisma.UserUncheckedUpdateWithoutFilesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFilesInput, Prisma.UserUncheckedCreateWithoutFilesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFilesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFilesInput, Prisma.UserUncheckedUpdateWithoutFilesInput>
+}
+
+export type UserUpdateWithoutFilesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isTwoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastFailedLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blockedServices?: Prisma.UserUpdateblockedServicesInput | string[]
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduledDeletionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  twoFactorConfirmation?: Prisma.twoFactorConfirmationUpdateOneWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFilesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isTwoFactorEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lastFailedLogin?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isBlocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  blockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  blockedReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  blockedServices?: Prisma.UserUpdateblockedServicesInput | string[]
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  scheduledDeletionDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  twoFactorConfirmation?: Prisma.twoFactorConfirmationUncheckedUpdateOneWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -1187,11 +1344,13 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
 export type UserCountOutputType = {
   auditLogs: number
   sessions: number
+  files: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+  files?: boolean | UserCountOutputTypeCountFilesArgs
 }
 
 /**
@@ -1216,6 +1375,13 @@ export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.
  */
 export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SessionWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFilesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FileUploadWhereInput
 }
 
 
@@ -1244,6 +1410,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   twoFactorConfirmation?: boolean | Prisma.User$twoFactorConfirmationArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
+  files?: boolean | Prisma.User$filesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1324,6 +1491,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   twoFactorConfirmation?: boolean | Prisma.User$twoFactorConfirmationArgs<ExtArgs>
   auditLogs?: boolean | Prisma.User$auditLogsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
+  files?: boolean | Prisma.User$filesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1335,6 +1503,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     twoFactorConfirmation: Prisma.$twoFactorConfirmationPayload<ExtArgs> | null
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     sessions: Prisma.$SessionPayload<ExtArgs>[]
+    files: Prisma.$FileUploadPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1755,6 +1924,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   twoFactorConfirmation<T extends Prisma.User$twoFactorConfirmationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$twoFactorConfirmationArgs<ExtArgs>>): Prisma.Prisma__twoFactorConfirmationClient<runtime.Types.Result.GetResult<Prisma.$twoFactorConfirmationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   auditLogs<T extends Prisma.User$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  files<T extends Prisma.User$filesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$filesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FileUploadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2257,6 +2427,30 @@ export type User$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
+}
+
+/**
+ * User.files
+ */
+export type User$filesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FileUpload
+   */
+  select?: Prisma.FileUploadSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FileUpload
+   */
+  omit?: Prisma.FileUploadOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FileUploadInclude<ExtArgs> | null
+  where?: Prisma.FileUploadWhereInput
+  orderBy?: Prisma.FileUploadOrderByWithRelationInput | Prisma.FileUploadOrderByWithRelationInput[]
+  cursor?: Prisma.FileUploadWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FileUploadScalarFieldEnum | Prisma.FileUploadScalarFieldEnum[]
 }
 
 /**

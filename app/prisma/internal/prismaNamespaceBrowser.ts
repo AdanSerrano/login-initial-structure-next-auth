@@ -58,7 +58,8 @@ export const ModelName = {
   MagicLinkToken: 'MagicLinkToken',
   twoFactorConfirmation: 'twoFactorConfirmation',
   AuditLog: 'AuditLog',
-  Session: 'Session'
+  Session: 'Session',
+  FileUpload: 'FileUpload'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -178,6 +179,26 @@ export const SessionScalarFieldEnum = {
 } as const
 
 export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const FileUploadScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  fileName: 'fileName',
+  fileKey: 'fileKey',
+  fileSize: 'fileSize',
+  mimeType: 'mimeType',
+  fileExtension: 'fileExtension',
+  visibility: 'visibility',
+  category: 'category',
+  status: 'status',
+  publicUrl: 'publicUrl',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FileUploadScalarFieldEnum = (typeof FileUploadScalarFieldEnum)[keyof typeof FileUploadScalarFieldEnum]
 
 
 export const SortOrder = {

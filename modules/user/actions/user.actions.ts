@@ -31,6 +31,16 @@ export async function updateProfileAction(input: UpdateProfileInput) {
   return await controller.updateProfile(user.id, input);
 }
 
+export async function updateProfileImageAction(imageUrl: string) {
+  const user = await currentUser();
+
+  if (!user?.id) {
+    return { error: "No autorizado" };
+  }
+
+  return await controller.updateProfileImage(user.id, imageUrl);
+}
+
 export async function updateEmailAction(input: UpdateEmailInput) {
   const user = await currentUser();
 

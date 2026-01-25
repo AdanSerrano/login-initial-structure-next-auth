@@ -45,6 +45,7 @@ model User {
   twoFactorConfirmation twoFactorConfirmation?
   auditLogs             AuditLog[]
   sessions              Session[]
+  files                 FileUpload[]
 }
 
 model VerificationToken {
@@ -146,5 +147,33 @@ model Session {
   @@index([userId])
   @@index([token])
   @@index([lastActive])
+}
+
+model FileUpload {
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fileName      String
+  fileKey       String           @unique
+  fileSize      Int
+  mimeType      String
+  fileExtension String
+
+  visibility    String           @default("PRIVATE")  // PUBLIC, PRIVATE
+  category      String           @default("OTHER")    // IMAGE, DOCUMENT, SPREADSHEET, OTHER
+  status        String           @default("PENDING")  // PENDING, COMPLETED, FAILED, DELETED
+
+  publicUrl     String?
+
+  deletedAt     DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([visibility])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt])
 }
 

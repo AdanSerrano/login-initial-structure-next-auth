@@ -391,7 +391,8 @@ export const ModelName = {
   MagicLinkToken: 'MagicLinkToken',
   twoFactorConfirmation: 'twoFactorConfirmation',
   AuditLog: 'AuditLog',
-  Session: 'Session'
+  Session: 'Session',
+  FileUpload: 'FileUpload'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -407,7 +408,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "verificationToken" | "passwordResetToken" | "twoFactorToken" | "magicLinkToken" | "twoFactorConfirmation" | "auditLog" | "session"
+    modelProps: "user" | "verificationToken" | "passwordResetToken" | "twoFactorToken" | "magicLinkToken" | "twoFactorConfirmation" | "auditLog" | "session" | "fileUpload"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1003,6 +1004,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FileUpload: {
+      payload: Prisma.$FileUploadPayload<ExtArgs>
+      fields: Prisma.FileUploadFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FileUploadFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FileUploadFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>
+        }
+        findFirst: {
+          args: Prisma.FileUploadFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FileUploadFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>
+        }
+        findMany: {
+          args: Prisma.FileUploadFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>[]
+        }
+        create: {
+          args: Prisma.FileUploadCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>
+        }
+        createMany: {
+          args: Prisma.FileUploadCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FileUploadCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>[]
+        }
+        delete: {
+          args: Prisma.FileUploadDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>
+        }
+        update: {
+          args: Prisma.FileUploadUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>
+        }
+        deleteMany: {
+          args: Prisma.FileUploadDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FileUploadUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FileUploadUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>[]
+        }
+        upsert: {
+          args: Prisma.FileUploadUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileUploadPayload>
+        }
+        aggregate: {
+          args: Prisma.FileUploadAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFileUpload>
+        }
+        groupBy: {
+          args: Prisma.FileUploadGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FileUploadGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FileUploadCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FileUploadCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1143,6 +1218,26 @@ export const SessionScalarFieldEnum = {
 } as const
 
 export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const FileUploadScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  fileName: 'fileName',
+  fileKey: 'fileKey',
+  fileSize: 'fileSize',
+  mimeType: 'mimeType',
+  fileExtension: 'fileExtension',
+  visibility: 'visibility',
+  category: 'category',
+  status: 'status',
+  publicUrl: 'publicUrl',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FileUploadScalarFieldEnum = (typeof FileUploadScalarFieldEnum)[keyof typeof FileUploadScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1399,6 +1494,7 @@ export type GlobalOmitConfig = {
   twoFactorConfirmation?: Prisma.twoFactorConfirmationOmit
   auditLog?: Prisma.AuditLogOmit
   session?: Prisma.SessionOmit
+  fileUpload?: Prisma.FileUploadOmit
 }
 
 /* Types for Logging */

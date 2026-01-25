@@ -115,8 +115,8 @@ const securityHeaders = [
       "img-src 'self' data: blob: https:",
       // Fuentes: Google Fonts
       "font-src 'self' https://fonts.gstatic.com",
-      // Conexiones: mismo origen + APIs necesarias
-      "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+      // Conexiones: mismo origen + APIs necesarias + Cloudflare R2
+      `connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://*.r2.cloudflarestorage.com ${process.env.R2_PUBLIC_URL || ""}`.trim(),
       // Frames: ninguno permitido
       "frame-src 'none'",
       // Frame ancestors: ninguno (prevenir embedding)
@@ -274,6 +274,15 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
+      },
+      // Cloudflare R2 storage
+      {
+        protocol: "https",
+        hostname: "*.r2.cloudflarestorage.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.r2.dev",
       },
     ],
     // Tamaños de dispositivo

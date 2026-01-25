@@ -89,6 +89,25 @@ export class UserService {
     }
   }
 
+  public async updateProfileImage(
+    userId: string,
+    imageUrl: string
+  ): Promise<UserResult> {
+    try {
+      const updatedUser = await this.repository.updateProfile(userId, {
+        image: imageUrl,
+      });
+
+      return {
+        success: "Imagen de perfil actualizada",
+        data: updatedUser,
+      };
+    } catch (error) {
+      console.error("Error updating profile image:", error);
+      return { error: "Error al actualizar la imagen de perfil" };
+    }
+  }
+
   public async updateEmail(
     userId: string,
     input: UpdateEmailInput

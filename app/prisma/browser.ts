@@ -57,3 +57,8 @@ export type AuditLog = Prisma.AuditLogModel
  * 
  */
 export type Session = Prisma.SessionModel
+/**
+ * Model FileUpload
+ * 
+ */
+export type FileUpload = Prisma.FileUploadModel

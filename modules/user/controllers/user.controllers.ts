@@ -21,6 +21,10 @@ export class UserController {
     return await this.service.updateProfile(userId, input);
   }
 
+  public async updateProfileImage(userId: string, imageUrl: string) {
+    return await this.service.updateProfileImage(userId, imageUrl);
+  }
+
   public async updateEmail(userId: string, input: UpdateEmailInput) {
     return await this.service.updateEmail(userId, input);
   }

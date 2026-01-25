@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,10 +12,10 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
 import { ProfileViewModel } from "../../view-model/user.view-model";
 import { useTranslations } from "next-intl";
+import { ProfileImageUpload } from "../profile-image-upload";
 
 interface ProfileFormProps {
   defaultValues?: {
@@ -42,45 +42,41 @@ export const ProfileForm = memo(function ProfileForm({
   const watchedImage = form.watch("image");
   const watchedName = form.watch("name");
 
-  const getInitials = (name: string | undefined) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  const handleImageChange = useCallback(
+    (imageUrl: string) => {
+      // Update form value so the UI stays in sync
+      form.setValue("image", imageUrl, { shouldDirty: false });
+    },
+    [form]
+  );
+
+  const imageUploadLabels = useMemo(
+    () => ({
+      uploadButton: t("uploadImage"),
+      uploadingText: t("uploadingImage"),
+      errorInvalidType: t("errorInvalidImageType"),
+      errorTooLarge: t("errorImageTooLarge"),
+      errorUpload: t("errorImageUpload"),
+      successUpload: t("successImageUpload"),
+    }),
+    [t]
+  );
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="flex items-center gap-6">
-          <Avatar className="h-20 w-20 border-2 border-border">
-            <AvatarImage src={watchedImage || undefined} alt={watchedName} />
-            <AvatarFallback className="text-lg bg-primary/10 text-primary">
-              {getInitials(watchedName)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileImageUpload
+            currentImage={watchedImage || null}
+            name={watchedName || null}
+            labels={imageUploadLabels}
+            onImageChange={handleImageChange}
+            disabled={isPending}
+          />
           <div className="flex-1">
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("imageUrl")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder={t("imageUrlPlaceholder")}
-                      disabled={isPending}
-                      className="bg-background"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <p className="text-sm text-muted-foreground">
+              {t("imageUploadHint")}
+            </p>
           </div>
         </div>
 

@@ -279,7 +279,14 @@
     "usernamePlaceholder": "usuario123",
     "usernameHint": "Solo letras, números, guiones y guiones bajos",
     "saveChanges": "Guardar cambios",
-    "updateSuccess": "Perfil actualizado exitosamente"
+    "updateSuccess": "Perfil actualizado exitosamente",
+    "uploadImage": "Subir imagen",
+    "uploadingImage": "Subiendo imagen...",
+    "imageUploadHint": "Haz clic en el icono de cámara para subir una nueva foto de perfil (máx. 5MB)",
+    "errorInvalidImageType": "Tipo de imagen no válido. Usa JPG, PNG, GIF o WebP",
+    "errorImageTooLarge": "La imagen es muy grande. El tamaño máximo es 5MB",
+    "errorImageUpload": "Error al subir la imagen",
+    "successImageUpload": "Imagen de perfil actualizada"
   },
   "UserProfile": {
     "noName": "Sin nombre",
@@ -769,6 +776,59 @@
       "discontinued": "Descontinuados",
       "lowStock": "Stock Bajo",
       "totalValue": "Valor Total"
+    }
+  },
+  "FileUpload": {
+    "title": "Gestión de Archivos",
+    "description": "Sube y gestiona tus archivos de forma segura",
+    "dropzone": {
+      "title": "Arrastra archivos aquí",
+      "description": "o haz clic para seleccionar",
+      "browse": "Explorar archivos",
+      "maxSize": "Tamaño máximo: {size}",
+      "uploading": "Subiendo archivo...",
+      "error": "Error al subir"
+    },
+    "tabs": {
+      "all": "Todos",
+      "public": "Públicos",
+      "private": "Privados"
+    },
+    "list": {
+      "empty": {
+        "title": "Sin archivos",
+        "description": "Sube tu primer archivo para comenzar"
+      }
+    },
+    "preview": {
+      "title": "Vista previa",
+      "details": "Detalles del archivo",
+      "fileName": "Nombre",
+      "fileSize": "Tamaño",
+      "uploadDate": "Fecha de subida"
+    },
+    "dialogs": {
+      "delete": {
+        "title": "Eliminar archivo",
+        "message": "¿Estás seguro de que deseas eliminar este archivo? Esta acción no se puede deshacer."
+      }
+    },
+    "categories": {
+      "image": "Imagen",
+      "document": "Documento",
+      "spreadsheet": "Hoja de cálculo",
+      "other": "Otro"
+    },
+    "visibility": {
+      "public": "Público",
+      "private": "Privado"
+    },
+    "messages": {
+      "uploadSuccess": "Archivo subido exitosamente",
+      "uploadError": "Error al subir archivo",
+      "deleteSuccess": "Archivo eliminado exitosamente",
+      "deleteError": "Error al eliminar archivo",
+      "downloadError": "Error al descargar archivo"
     }
   }
 }

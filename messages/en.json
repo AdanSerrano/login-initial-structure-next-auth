@@ -279,7 +279,14 @@
     "usernamePlaceholder": "username123",
     "usernameHint": "Only letters, numbers, hyphens and underscores",
     "saveChanges": "Save changes",
-    "updateSuccess": "Profile updated successfully"
+    "updateSuccess": "Profile updated successfully",
+    "uploadImage": "Upload image",
+    "uploadingImage": "Uploading image...",
+    "imageUploadHint": "Click the camera icon to upload a new profile photo (max 5MB)",
+    "errorInvalidImageType": "Invalid image type. Use JPG, PNG, GIF or WebP",
+    "errorImageTooLarge": "Image is too large. Maximum size is 5MB",
+    "errorImageUpload": "Error uploading image",
+    "successImageUpload": "Profile image updated"
   },
   "UserProfile": {
     "noName": "No name",
@@ -770,6 +777,59 @@
       "discontinued": "Discontinued",
       "lowStock": "Low Stock",
       "totalValue": "Total Value"
+    }
+  },
+  "FileUpload": {
+    "title": "File Management",
+    "description": "Upload and manage your files securely",
+    "dropzone": {
+      "title": "Drag files here",
+      "description": "or click to select",
+      "browse": "Browse files",
+      "maxSize": "Max size: {size}",
+      "uploading": "Uploading file...",
+      "error": "Upload error"
+    },
+    "tabs": {
+      "all": "All",
+      "public": "Public",
+      "private": "Private"
+    },
+    "list": {
+      "empty": {
+        "title": "No files",
+        "description": "Upload your first file to get started"
+      }
+    },
+    "preview": {
+      "title": "Preview",
+      "details": "File details",
+      "fileName": "Name",
+      "fileSize": "Size",
+      "uploadDate": "Upload date"
+    },
+    "dialogs": {
+      "delete": {
+        "title": "Delete file",
+        "message": "Are you sure you want to delete this file? This action cannot be undone."
+      }
+    },
+    "categories": {
+      "image": "Image",
+      "document": "Document",
+      "spreadsheet": "Spreadsheet",
+      "other": "Other"
+    },
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "messages": {
+      "uploadSuccess": "File uploaded successfully",
+      "uploadError": "Error uploading file",
+      "deleteSuccess": "File deleted successfully",
+      "deleteError": "Error deleting file",
+      "downloadError": "Error downloading file"
     }
   }
 }
