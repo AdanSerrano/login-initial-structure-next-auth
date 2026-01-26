@@ -75,7 +75,6 @@
     "contact": "Contact",
     "logout": "Logout",
     "account": "Account",
-    "demoDataTable": "Demo DataTable",
     "usersManagement": "User Management"
   },
   "Auth": {

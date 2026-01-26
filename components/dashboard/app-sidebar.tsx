@@ -72,11 +72,6 @@ const settingsNavItemsConfig: NavItem[] = [
     url: "/dashboard/settings/security",
     icon: Shield,
   },
-  {
-    titleKey: "demoDataTable",
-    url: "/dashboard/demo/table",
-    icon: Table,
-  },
 ];
 
 interface AppSidebarProps {

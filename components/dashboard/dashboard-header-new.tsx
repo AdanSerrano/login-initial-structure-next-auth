@@ -27,7 +27,6 @@ function DashboardHeaderComponent() {
       "/dashboard/settings/profile": t("settings"),
       "/dashboard/settings/security": t("security"),
       "/dashboard/admin/users": t("usersManagement"),
-      "/dashboard/demo/table": t("demoDataTable"),
     }),
     [t]
   );
