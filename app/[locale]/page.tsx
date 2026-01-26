@@ -32,9 +32,14 @@ import {
   Zap,
   Layers,
   Code2,
-  Cookie,
   Wand2,
   Shield,
+  Globe,
+  Cloud,
+  Users,
+  ShieldCheck,
+  Gauge,
+  MonitorSmartphone,
 } from "lucide-react";
 
 interface HomeProps {
@@ -81,14 +86,34 @@ export default async function Home({ params }: HomeProps) {
       description: t("features.sessionManagementDesc"),
     },
     {
-      icon: Shield,
-      title: t("features.advancedProtection"),
-      description: t("features.advancedProtectionDesc"),
+      icon: Globe,
+      title: t("features.internationalization"),
+      description: t("features.internationalizationDesc"),
     },
     {
-      icon: Cookie,
-      title: t("features.cookieManagement"),
-      description: t("features.cookieManagementDesc"),
+      icon: Cloud,
+      title: t("features.cloudStorage"),
+      description: t("features.cloudStorageDesc"),
+    },
+    {
+      icon: Users,
+      title: t("features.adminDashboard"),
+      description: t("features.adminDashboardDesc"),
+    },
+    {
+      icon: ShieldCheck,
+      title: t("features.wafSecurity"),
+      description: t("features.wafSecurityDesc"),
+    },
+    {
+      icon: Gauge,
+      title: t("features.rateLimiting"),
+      description: t("features.rateLimitingDesc"),
+    },
+    {
+      icon: MonitorSmartphone,
+      title: t("features.pwa"),
+      description: t("features.pwaSupportDesc"),
     },
   ];
 
@@ -99,6 +124,9 @@ export default async function Home({ params }: HomeProps) {
     { name: t("techStack.prisma"), description: t("techStack.prismaDesc") },
     { name: t("techStack.authjs"), description: t("techStack.authjsDesc") },
     { name: t("techStack.tailwind"), description: t("techStack.tailwindDesc") },
+    { name: t("techStack.nextIntl"), description: t("techStack.nextIntlDesc") },
+    { name: t("techStack.cloudflareR2"), description: t("techStack.cloudflareR2Desc") },
+    { name: t("techStack.pwa"), description: t("techStack.pwaDesc") },
   ];
 
   const benefits = [
@@ -108,6 +136,9 @@ export default async function Home({ params }: HomeProps) {
     t("benefits.darkLightMode"),
     t("benefits.responsiveDesign"),
     t("benefits.gdprCompliance"),
+    t("benefits.multiLanguage"),
+    t("benefits.fileManagement"),
+    t("benefits.enterpriseSecurity"),
     t("benefits.productionReady"),
   ];
 
@@ -131,7 +162,7 @@ export default async function Home({ params }: HomeProps) {
               </AnimatedSection>
 
               <AnimatedSection animation="fade-up" delay={100}>
-                <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+                <h1 className="mb-4 sm:mb-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight flex flex-col justify-center items-center">
                   {t("title")}{" "}
                   <span className="from-gray-100 to-gray-200 bg-clip-text text-muted-foreground">
                     {t("titleHighlight")}
@@ -292,19 +323,26 @@ export default async function Home({ params }: HomeProps) {
                     <pre className="overflow-x-auto text-[10px] sm:text-xs md:text-sm">
                       <code className="text-muted-foreground">
 {`modules/
-├── login/
-│   ├── actions/
-│   ├── components/
-│   ├── controllers/
-│   ├── hooks/
-│   ├── repository/
-│   ├── services/
-│   ├── validations/
-│   └── view/
-├── register/
-├── two-factor/
+├── auth/
+│   ├── login/
+│   ├── register/
+│   ├── two-factor/
+│   └── magic-link/
 ├── user/
-└── ...`}
+│   ├── profile/
+│   ├── security/
+│   └── sessions/
+├── dashboard/
+│   └── admin/
+│       ├── users/
+│       └── file-manager/
+├── file-upload/
+│   ├── actions/
+│   ├── services/
+│   └── repository/
+└── lib/
+    ├── aws/
+    └── security/`}
                       </code>
                     </pre>
                   </div>

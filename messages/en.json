@@ -193,16 +193,16 @@
   },
   "HomePage": {
     "badge": "Next.js 16 + Auth.js v5",
-    "title": "Authentication system",
+    "title": "SaaS Platform",
     "titleHighlight": "complete and secure",
-    "subtitle": "Production-ready authentication boilerplate with clean architecture, email verification, 2FA, GDPR cookie management, and much more.",
+    "subtitle": "Enterprise-ready template with advanced authentication, internationalization, cloud storage, admin dashboard, and enterprise-level security.",
     "getStarted": "Get Started",
     "viewDemo": "View Demo",
     "learnMore": "Learn More",
     "featuresSection": {
       "badge": "Features",
-      "title": "Everything you need for authentication",
-      "subtitle": "Complete authentication features implemented following security best practices."
+      "title": "Everything you need for your SaaS",
+      "subtitle": "Enterprise-ready features implemented following industry best practices."
     },
     "techSection": {
       "badge": "Tech Stack",
@@ -217,7 +217,7 @@
     },
     "ctaSection": {
       "title": "Start building today",
-      "subtitle": "Create your account and explore all the features of the authentication system."
+      "subtitle": "Create your account and explore all the platform features."
     },
     "features": {
       "secureRegistration": "Secure Registration",
@@ -232,10 +232,18 @@
       "twoFactorAuthDesc": "Two-step verification via OTP code sent by email for enhanced security.",
       "sessionManagement": "Session Management",
       "sessionManagementDesc": "JWT sessions with configurable expiration and automatic route protection.",
-      "advancedProtection": "Advanced Protection",
-      "advancedProtectionDesc": "Rate limiting, account lockout for failed attempts, and access auditing.",
-      "cookieManagement": "GDPR Cookie Management",
-      "cookieManagementDesc": "Consent banner with customizable preferences: necessary, analytics, and functional cookies."
+      "internationalization": "Internationalization",
+      "internationalizationDesc": "Multi-language support with next-intl. Switch between Spanish and English with auto-detection.",
+      "cloudStorage": "Cloud Storage",
+      "cloudStorageDesc": "File management with Cloudflare R2. Drag & drop upload, preview, and folder organization.",
+      "adminDashboard": "Admin Dashboard",
+      "adminDashboardDesc": "Complete user and file management. Role control, account blocking, and auditing.",
+      "wafSecurity": "Web Application Firewall",
+      "wafSecurityDesc": "48 detection rules: SQL injection, XSS, path traversal. Automatic blocking of malicious IPs.",
+      "rateLimiting": "Rate Limiting",
+      "rateLimitingDesc": "Abuse protection with configurable limits per endpoint. Sliding window algorithm.",
+      "pwa": "Progressive Web App",
+      "pwaSupportDesc": "Installable as native app. Offline support and push notifications."
     },
     "techStack": {
       "nextjs": "Next.js 16",
@@ -244,12 +252,18 @@
       "reactDesc": "Server Components",
       "typescript": "TypeScript",
       "typescriptDesc": "Type-safe",
-      "prisma": "Prisma",
+      "prisma": "Prisma 7",
       "prismaDesc": "ORM + PostgreSQL",
       "authjs": "Auth.js v5",
       "authjsDesc": "NextAuth Beta",
-      "tailwind": "Tailwind CSS",
-      "tailwindDesc": "shadcn/ui"
+      "tailwind": "Tailwind CSS 4",
+      "tailwindDesc": "shadcn/ui",
+      "nextIntl": "next-intl",
+      "nextIntlDesc": "Internationalization",
+      "cloudflareR2": "Cloudflare R2",
+      "cloudflareR2Desc": "Object Storage",
+      "pwa": "PWA Ready",
+      "pwaDesc": "Installable"
     },
     "benefits": {
       "cleanArchitecture": "Clean and modular architecture",
@@ -258,6 +272,9 @@
       "darkLightMode": "Dark/light mode support",
       "responsiveDesign": "Mobile-first responsive design",
       "gdprCompliance": "GDPR compliance with cookie management",
+      "multiLanguage": "Multi-language support (ES/EN)",
+      "fileManagement": "File management with R2",
+      "enterpriseSecurity": "Enterprise-level security",
       "productionReady": "Production ready"
     }
   },

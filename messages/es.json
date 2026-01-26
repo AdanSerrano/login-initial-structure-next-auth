@@ -193,16 +193,16 @@
   },
   "HomePage": {
     "badge": "Next.js 16 + Auth.js v5",
-    "title": "Sistema de autenticación",
-    "titleHighlight": "completo y seguro",
-    "subtitle": "Boilerplate de autenticación production-ready con arquitectura limpia, verificación de email, 2FA, gestión de cookies GDPR y mucho más.",
+    "title": "Plataforma SaaS",
+    "titleHighlight": "completa y segura",
+    "subtitle": "Template enterprise-ready con autenticación avanzada, internacionalización, almacenamiento en la nube, panel de administración y seguridad de nivel empresarial.",
     "getStarted": "Comenzar",
     "viewDemo": "Ver demo",
     "learnMore": "Más información",
     "featuresSection": {
       "badge": "Características",
-      "title": "Todo lo que necesitas para autenticación",
-      "subtitle": "Funcionalidades completas de autenticación implementadas siguiendo las mejores prácticas de seguridad."
+      "title": "Todo lo que necesitas para tu SaaS",
+      "subtitle": "Funcionalidades enterprise-ready implementadas siguiendo las mejores prácticas de la industria."
     },
     "techSection": {
       "badge": "Stack tecnológico",
@@ -217,7 +217,7 @@
     },
     "ctaSection": {
       "title": "Comienza a construir hoy",
-      "subtitle": "Crea tu cuenta y explora todas las funcionalidades del sistema de autenticación."
+      "subtitle": "Crea tu cuenta y explora todas las funcionalidades de la plataforma."
     },
     "features": {
       "secureRegistration": "Registro seguro",
@@ -232,10 +232,18 @@
       "twoFactorAuthDesc": "Verificación en dos pasos mediante código OTP enviado por email para mayor seguridad.",
       "sessionManagement": "Gestión de sesiones",
       "sessionManagementDesc": "Sesiones JWT con expiración configurable y protección de rutas automática.",
-      "advancedProtection": "Protección avanzada",
-      "advancedProtectionDesc": "Rate limiting, bloqueo de cuentas por intentos fallidos y auditoría de accesos.",
-      "cookieManagement": "Gestión de cookies GDPR",
-      "cookieManagementDesc": "Banner de consentimiento con preferencias personalizables: cookies necesarias, analíticas y funcionales."
+      "internationalization": "Internacionalización",
+      "internationalizationDesc": "Soporte multi-idioma con next-intl. Cambia entre español e inglés con detección automática.",
+      "cloudStorage": "Almacenamiento en la nube",
+      "cloudStorageDesc": "Gestión de archivos con Cloudflare R2. Upload drag & drop, vista previa y organización por carpetas.",
+      "adminDashboard": "Panel de administración",
+      "adminDashboardDesc": "Gestión completa de usuarios y archivos. Control de roles, bloqueo de cuentas y auditoría.",
+      "wafSecurity": "Firewall de aplicación (WAF)",
+      "wafSecurityDesc": "48 reglas de detección: SQL injection, XSS, path traversal. Bloqueo automático de IPs maliciosas.",
+      "rateLimiting": "Rate Limiting",
+      "rateLimitingDesc": "Protección contra abuso con límites configurables por endpoint. Algoritmo de ventana deslizante.",
+      "pwa": "Progressive Web App",
+      "pwaSupportDesc": "Instalable como app nativa. Soporte offline y notificaciones push."
     },
     "techStack": {
       "nextjs": "Next.js 16",
@@ -244,12 +252,18 @@
       "reactDesc": "Server Components",
       "typescript": "TypeScript",
       "typescriptDesc": "Type-safe",
-      "prisma": "Prisma",
+      "prisma": "Prisma 7",
       "prismaDesc": "ORM + PostgreSQL",
       "authjs": "Auth.js v5",
       "authjsDesc": "NextAuth Beta",
-      "tailwind": "Tailwind CSS",
-      "tailwindDesc": "shadcn/ui"
+      "tailwind": "Tailwind CSS 4",
+      "tailwindDesc": "shadcn/ui",
+      "nextIntl": "next-intl",
+      "nextIntlDesc": "Internacionalización",
+      "cloudflareR2": "Cloudflare R2",
+      "cloudflareR2Desc": "Object Storage",
+      "pwa": "PWA Ready",
+      "pwaDesc": "Instalable"
     },
     "benefits": {
       "cleanArchitecture": "Arquitectura limpia y modular",
@@ -258,6 +272,9 @@
       "darkLightMode": "Soporte para dark/light mode",
       "responsiveDesign": "Diseño responsive mobile-first",
       "gdprCompliance": "Cumplimiento GDPR con gestión de cookies",
+      "multiLanguage": "Soporte multi-idioma (ES/EN)",
+      "fileManagement": "Gestión de archivos con R2",
+      "enterpriseSecurity": "Seguridad de nivel empresarial",
       "productionReady": "Listo para producción"
     }
   },
