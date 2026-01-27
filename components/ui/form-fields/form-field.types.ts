@@ -9,6 +9,12 @@ import type {
 } from "react-hook-form";
 import type { LucideIcon } from "lucide-react";
 
+export interface TooltipConfig {
+  content: ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+}
+
 export interface BaseFormFieldProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -21,6 +27,7 @@ export interface BaseFormFieldProps<
   disabled?: boolean;
   className?: string;
   required?: boolean;
+  tooltip?: TooltipConfig | string;
 }
 
 export interface FormFieldOption<T = string> {
@@ -80,6 +87,58 @@ export interface DateRange {
   from: Date | undefined;
   to?: Date | undefined;
 }
+
+export interface TimeValue {
+  hours: number;
+  minutes: number;
+}
+
+export interface TimeRange {
+  from: TimeValue | undefined;
+  to?: TimeValue | undefined;
+}
+
+export interface TagOption {
+  value: string;
+  label: string;
+  color?: string;
+}
+
+export interface TreeNode {
+  value: string;
+  label: string;
+  children?: TreeNode[];
+  disabled?: boolean;
+  icon?: LucideIcon;
+}
+
+export interface CascadeOption {
+  value: string;
+  label: string;
+  children?: CascadeOption[];
+  disabled?: boolean;
+}
+
+export interface DatePreset {
+  label: string;
+  getValue: () => Date | DateRange;
+}
+
+export interface CurrencyConfig {
+  code: string;
+  symbol: string;
+  locale: string;
+  decimals?: number;
+}
+
+export const DEFAULT_CURRENCIES: Record<string, CurrencyConfig> = {
+  USD: { code: "USD", symbol: "$", locale: "en-US", decimals: 2 },
+  EUR: { code: "EUR", symbol: "€", locale: "de-DE", decimals: 2 },
+  GBP: { code: "GBP", symbol: "£", locale: "en-GB", decimals: 2 },
+  MXN: { code: "MXN", symbol: "$", locale: "es-MX", decimals: 2 },
+  BRL: { code: "BRL", symbol: "R$", locale: "pt-BR", decimals: 2 },
+  JPY: { code: "JPY", symbol: "¥", locale: "ja-JP", decimals: 0 },
+};
 
 export interface FileWithPreview extends File {
   preview?: string;

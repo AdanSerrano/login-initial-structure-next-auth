@@ -20,7 +20,6 @@ function DashboardHeaderComponent() {
   const pathname = usePathname();
   const t = useTranslations("Navigation");
 
-  // Memoizar las etiquetas de ruta traducidas
   const routeLabels = useMemo(
     () => ({
       "/dashboard/services": t("dashboard"),
