@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useMemo } from "react";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import type { FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -169,6 +169,146 @@ const PlatformIcon = memo(function PlatformIcon({
   );
 });
 
+interface SocialContentProps {
+  field: ControllerRenderProps<FieldValues, string>;
+  hasError: boolean;
+  disabled?: boolean;
+  platforms: SocialPlatform[];
+  defaultPlatform: SocialPlatform;
+  showPlatformSelector: boolean;
+  showOpenLink: boolean;
+}
+
+const SocialContent = memo(function SocialContent({
+  field,
+  hasError,
+  disabled,
+  platforms,
+  defaultPlatform,
+  showPlatformSelector,
+  showOpenLink,
+}: SocialContentProps) {
+  const value = useMemo(
+    () =>
+      (field.value || {
+        platform: defaultPlatform,
+        handle: "",
+      }) as SocialValue,
+    [field.value, defaultPlatform]
+  );
+
+  const config = PLATFORM_CONFIGS[value.platform];
+
+  const profileUrl = useMemo(() => {
+    if (!config.baseUrl || !value.handle) return null;
+    let cleanHandle = value.handle;
+    if (config.prefix && value.handle.startsWith(config.prefix)) {
+      cleanHandle = value.handle.slice(config.prefix.length);
+    }
+    return `${config.baseUrl}${cleanHandle}`;
+  }, [config.baseUrl, config.prefix, value.handle]);
+
+  const handlePlatformChange = useCallback(
+    (platform: string) => {
+      field.onChange({ ...value, platform: platform as SocialPlatform });
+    },
+    [field, value]
+  );
+
+  const handleHandleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let newHandle = e.target.value;
+      const platformConfig = PLATFORM_CONFIGS[value.platform];
+      if (platformConfig.prefix && newHandle.startsWith(platformConfig.prefix)) {
+        newHandle = newHandle.slice(platformConfig.prefix.length);
+      }
+      field.onChange({ ...value, handle: newHandle });
+    },
+    [field, value]
+  );
+
+  const handleOpenProfile = useCallback(() => {
+    if (profileUrl) {
+      window.open(profileUrl, "_blank", "noopener,noreferrer");
+    }
+  }, [profileUrl]);
+
+  const inputClasses = useMemo(
+    () =>
+      cn(
+        "bg-background",
+        config.prefix && "pl-9",
+        hasError && "border-destructive"
+      ),
+    [config.prefix, hasError]
+  );
+
+  return (
+    <div className="flex gap-2">
+      {showPlatformSelector && (
+        <Select
+          value={value.platform}
+          onValueChange={handlePlatformChange}
+          disabled={disabled}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue>
+              <div className="flex items-center gap-2">
+                <PlatformIcon platform={value.platform} />
+                <span className="truncate">{config.name}</span>
+              </div>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {platforms.map((platform) => {
+              const pConfig = PLATFORM_CONFIGS[platform];
+              return (
+                <SelectItem key={platform} value={platform}>
+                  <div className="flex items-center gap-2">
+                    <PlatformIcon platform={platform} />
+                    <span>{pConfig.name}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      )}
+
+      <div className="relative flex-1">
+        {config.prefix && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 z-10 pointer-events-none">
+            {config.prefix === "@" ? (
+              <AtSign className="h-4 w-4" />
+            ) : (
+              <span className="text-sm">{config.prefix}</span>
+            )}
+          </div>
+        )}
+        <Input
+          value={value.handle}
+          onChange={handleHandleChange}
+          placeholder={config.placeholder}
+          disabled={disabled}
+          className={inputClasses}
+        />
+      </div>
+
+      {showOpenLink && profileUrl && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={handleOpenProfile}
+          disabled={disabled || !value.handle}
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+});
+
 function FormSocialFieldComponent<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -185,130 +325,33 @@ function FormSocialFieldComponent<
   showPlatformSelector = true,
   showOpenLink = true,
 }: FormSocialFieldProps<TFieldValues, TName>) {
-  const getProfileUrl = useCallback((platform: SocialPlatform, handle: string): string | null => {
-    const config = PLATFORM_CONFIGS[platform];
-    if (!config.baseUrl || !handle) return null;
-
-    let cleanHandle = handle;
-    if (config.prefix && handle.startsWith(config.prefix)) {
-      cleanHandle = handle.slice(config.prefix.length);
-    }
-
-    return `${config.baseUrl}${cleanHandle}`;
-  }, []);
-
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => {
-        const value = (field.value || {
-          platform: defaultPlatform,
-          handle: "",
-        }) as SocialValue;
-        const config = PLATFORM_CONFIGS[value.platform];
-        const profileUrl = getProfileUrl(value.platform, value.handle);
-
-        const handlePlatformChange = (platform: SocialPlatform) => {
-          field.onChange({ ...value, platform });
-        };
-
-        const handleHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          let newHandle = e.target.value;
-          const platformConfig = PLATFORM_CONFIGS[value.platform];
-          if (platformConfig.prefix && newHandle.startsWith(platformConfig.prefix)) {
-            newHandle = newHandle.slice(platformConfig.prefix.length);
-          }
-          field.onChange({ ...value, handle: newHandle });
-        };
-
-        const handleOpenProfile = () => {
-          if (profileUrl) {
-            window.open(profileUrl, "_blank", "noopener,noreferrer");
-          }
-        };
-
-        return (
-          <FormItem className={className}>
-            {label && (
-              <FormLabel>
-                {label}
-                {required && <span className="text-destructive ml-1">*</span>}
-              </FormLabel>
-            )}
-            <FormControl>
-              <div className="flex gap-2">
-                {showPlatformSelector && (
-                  <Select
-                    value={value.platform}
-                    onValueChange={(v) => handlePlatformChange(v as SocialPlatform)}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          <PlatformIcon platform={value.platform} />
-                          <span className="truncate">{config.name}</span>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {platforms.map((platform) => {
-                        const pConfig = PLATFORM_CONFIGS[platform];
-                        return (
-                          <SelectItem key={platform} value={platform}>
-                            <div className="flex items-center gap-2">
-                              <PlatformIcon platform={platform} />
-                              <span>{pConfig.name}</span>
-                            </div>
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                )}
-
-                <div className="relative flex-1">
-                  {config.prefix && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 z-10 pointer-events-none">
-                      {config.prefix === "@" ? (
-                        <AtSign className="h-4 w-4" />
-                      ) : (
-                        <span className="text-sm">{config.prefix}</span>
-                      )}
-                    </div>
-                  )}
-                  <Input
-                    value={value.handle}
-                    onChange={handleHandleChange}
-                    placeholder={config.placeholder}
-                    disabled={disabled}
-                    className={cn(
-                      "bg-background",
-                      config.prefix && "pl-9",
-                      fieldState.error && "border-destructive"
-                    )}
-                  />
-                </div>
-
-                {showOpenLink && profileUrl && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={handleOpenProfile}
-                    disabled={disabled || !value.handle}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </FormControl>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+      render={({ field, fieldState }) => (
+        <FormItem className={className}>
+          {label && (
+            <FormLabel>
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </FormLabel>
+          )}
+          <FormControl>
+            <SocialContent
+              field={field as unknown as ControllerRenderProps<FieldValues, string>}
+              hasError={!!fieldState.error}
+              disabled={disabled}
+              platforms={platforms}
+              defaultPlatform={defaultPlatform}
+              showPlatformSelector={showPlatformSelector}
+              showOpenLink={showOpenLink}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useMemo } from "react";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import type { FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -133,6 +133,172 @@ const CardTypeIcon = memo(function CardTypeIcon({ type }: { type: CardType }) {
   );
 });
 
+interface CreditCardContentProps {
+  field: ControllerRenderProps<FieldValues, string>;
+  hasError: boolean;
+  disabled?: boolean;
+  showCardholderName: boolean;
+  showCardType: boolean;
+  labels: {
+    cardNumber: string;
+    expiry: string;
+    cvc: string;
+    name: string;
+  };
+  placeholders: {
+    cardNumber: string;
+    expiry: string;
+    cvc: string;
+    name: string;
+  };
+}
+
+const CreditCardContent = memo(function CreditCardContent({
+  field,
+  hasError,
+  disabled,
+  showCardholderName,
+  showCardType,
+  labels,
+  placeholders,
+}: CreditCardContentProps) {
+  const value = useMemo(
+    () => (field.value || {}) as CreditCardValue,
+    [field.value]
+  );
+
+  const cardType = useMemo(
+    () => detectCardType(value.number || ""),
+    [value.number]
+  );
+
+  const handleNumberChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const currentType = detectCardType(e.target.value);
+      const formatted = formatCardNumber(e.target.value, currentType);
+      field.onChange({ ...value, number: formatted });
+    },
+    [field, value]
+  );
+
+  const handleExpiryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatExpiry(e.target.value);
+      field.onChange({ ...value, expiry: formatted });
+    },
+    [field, value]
+  );
+
+  const handleCVCChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatCVC(e.target.value, cardType);
+      field.onChange({ ...value, cvc: formatted });
+    },
+    [field, value, cardType]
+  );
+
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      field.onChange({ ...value, name: e.target.value.toUpperCase() });
+    },
+    [field, value]
+  );
+
+  const containerClasses = useMemo(
+    () => cn("rounded-lg border p-4 space-y-4", hasError && "border-destructive"),
+    [hasError]
+  );
+
+  const numberInputClasses = useMemo(
+    () => cn("bg-background pr-16", hasError && "border-destructive"),
+    [hasError]
+  );
+
+  const inputClasses = useMemo(
+    () => cn("bg-background", hasError && "border-destructive"),
+    [hasError]
+  );
+
+  const nameInputClasses = useMemo(
+    () => cn("bg-background uppercase", hasError && "border-destructive"),
+    [hasError]
+  );
+
+  return (
+    <div className={containerClasses}>
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <CreditCard className="h-3 w-3" />
+          {labels.cardNumber}
+        </label>
+        <div className="relative">
+          <Input
+            value={value.number || ""}
+            onChange={handleNumberChange}
+            placeholder={placeholders.cardNumber}
+            disabled={disabled}
+            className={numberInputClasses}
+            autoComplete="cc-number"
+          />
+          {showCardType && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <CardTypeIcon type={cardType} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            {labels.expiry}
+          </label>
+          <Input
+            value={value.expiry || ""}
+            onChange={handleExpiryChange}
+            placeholder={placeholders.expiry}
+            disabled={disabled}
+            className={inputClasses}
+            autoComplete="cc-exp"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Lock className="h-3 w-3" />
+            {labels.cvc}
+          </label>
+          <Input
+            type="password"
+            value={value.cvc || ""}
+            onChange={handleCVCChange}
+            placeholder={placeholders.cvc}
+            disabled={disabled}
+            className={inputClasses}
+            autoComplete="cc-csc"
+          />
+        </div>
+      </div>
+
+      {showCardholderName && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            {labels.name}
+          </label>
+          <Input
+            value={value.name || ""}
+            onChange={handleNameChange}
+            placeholder={placeholders.name}
+            disabled={disabled}
+            className={nameInputClasses}
+            autoComplete="cc-name"
+          />
+        </div>
+      )}
+    </div>
+  );
+});
+
 function FormCreditCardFieldComponent<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -155,137 +321,33 @@ function FormCreditCardFieldComponent<
     [customPlaceholders]
   );
 
-  const updateField = useCallback(
-    (
-      currentValue: CreditCardValue,
-      key: keyof CreditCardValue,
-      newValue: string,
-      onChange: (value: CreditCardValue) => void
-    ) => {
-      onChange({ ...currentValue, [key]: newValue });
-    },
-    []
-  );
-
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => {
-        const value = (field.value || {}) as CreditCardValue;
-        const cardType = detectCardType(value.number || "");
-        const hasError = !!fieldState.error;
-
-        const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const formatted = formatCardNumber(e.target.value, cardType);
-          updateField(value, "number", formatted, field.onChange);
-        };
-
-        const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const formatted = formatExpiry(e.target.value);
-          updateField(value, "expiry", formatted, field.onChange);
-        };
-
-        const handleCVCChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const formatted = formatCVC(e.target.value, cardType);
-          updateField(value, "cvc", formatted, field.onChange);
-        };
-
-        const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          updateField(value, "name", e.target.value.toUpperCase(), field.onChange);
-        };
-
-        return (
-          <FormItem className={className}>
-            {label && (
-              <FormLabel>
-                {label}
-                {required && <span className="text-destructive ml-1">*</span>}
-              </FormLabel>
-            )}
-            <FormControl>
-              <div
-                className={cn(
-                  "rounded-lg border p-4 space-y-4",
-                  hasError && "border-destructive"
-                )}
-              >
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <CreditCard className="h-3 w-3" />
-                    {labels.cardNumber}
-                  </label>
-                  <div className="relative">
-                    <Input
-                      value={value.number || ""}
-                      onChange={handleNumberChange}
-                      placeholder={placeholders.cardNumber}
-                      disabled={disabled}
-                      className={cn("bg-background pr-16", hasError && "border-destructive")}
-                      autoComplete="cc-number"
-                    />
-                    {showCardType && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <CardTypeIcon type={cardType} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {labels.expiry}
-                    </label>
-                    <Input
-                      value={value.expiry || ""}
-                      onChange={handleExpiryChange}
-                      placeholder={placeholders.expiry}
-                      disabled={disabled}
-                      className={cn("bg-background", hasError && "border-destructive")}
-                      autoComplete="cc-exp"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <Lock className="h-3 w-3" />
-                      {labels.cvc}
-                    </label>
-                    <Input
-                      type="password"
-                      value={value.cvc || ""}
-                      onChange={handleCVCChange}
-                      placeholder={placeholders.cvc}
-                      disabled={disabled}
-                      className={cn("bg-background", hasError && "border-destructive")}
-                      autoComplete="cc-csc"
-                    />
-                  </div>
-                </div>
-
-                {showCardholderName && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">
-                      {labels.name}
-                    </label>
-                    <Input
-                      value={value.name || ""}
-                      onChange={handleNameChange}
-                      placeholder={placeholders.name}
-                      disabled={disabled}
-                      className={cn("bg-background uppercase", hasError && "border-destructive")}
-                      autoComplete="cc-name"
-                    />
-                  </div>
-                )}
-              </div>
-            </FormControl>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+      render={({ field, fieldState }) => (
+        <FormItem className={className}>
+          {label && (
+            <FormLabel>
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </FormLabel>
+          )}
+          <FormControl>
+            <CreditCardContent
+              field={field as unknown as ControllerRenderProps<FieldValues, string>}
+              hasError={!!fieldState.error}
+              disabled={disabled}
+              showCardholderName={showCardholderName}
+              showCardType={showCardType}
+              labels={labels}
+              placeholders={placeholders}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

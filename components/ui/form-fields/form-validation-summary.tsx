@@ -156,21 +156,49 @@ function FormValidationSummaryComponent<TFieldValues extends FieldValues = Field
     );
   }
 
+  const ErrorItem = useMemo(() => {
+    return memo(function ErrorItemComponent({
+      field,
+      message,
+      fieldLabel,
+      onClick,
+    }: {
+      field: string;
+      message: string;
+      fieldLabel: string;
+      onClick: (field: string) => void;
+    }) {
+      const handleClick = useCallback(() => {
+        onClick(field);
+      }, [field, onClick]);
+
+      return (
+        <li className="flex items-start gap-2">
+          <span className="text-destructive mt-0.5">•</span>
+          <button
+            type="button"
+            onClick={handleClick}
+            className="text-left text-sm hover:underline focus:outline-none focus:underline"
+          >
+            <span className="font-medium">{fieldLabel}:</span>{" "}
+            <span className="text-muted-foreground">{message}</span>
+          </button>
+        </li>
+      );
+    });
+  }, []);
+
   const content = (
     <div className="space-y-2">
       <ul className="space-y-1">
         {visibleErrors.map(({ field, message }) => (
-          <li key={field} className="flex items-start gap-2">
-            <span className="text-destructive mt-0.5">•</span>
-            <button
-              type="button"
-              onClick={() => handleErrorClick(field)}
-              className="text-left text-sm hover:underline focus:outline-none focus:underline"
-            >
-              <span className="font-medium">{getFieldLabel(field)}:</span>{" "}
-              <span className="text-muted-foreground">{message}</span>
-            </button>
-          </li>
+          <ErrorItem
+            key={field}
+            field={field}
+            message={message}
+            fieldLabel={getFieldLabel(field)}
+            onClick={handleErrorClick}
+          />
         ))}
       </ul>
       {hasMore && (

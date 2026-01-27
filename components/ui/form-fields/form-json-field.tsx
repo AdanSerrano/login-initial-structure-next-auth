@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useMemo } from "react";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import type { FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -167,6 +167,111 @@ const LineNumbers = memo(function LineNumbers({ count }: { count: number }) {
   );
 });
 
+interface JsonContentProps {
+  field: ControllerRenderProps<FieldValues, string>;
+  hasError: boolean;
+  disabled?: boolean;
+  placeholder: string;
+  minHeight: number;
+  maxHeight: number;
+  showToolbar: boolean;
+  showValidation: boolean;
+  allowFormat: boolean;
+  allowMinify: boolean;
+}
+
+const JsonContent = memo(function JsonContent({
+  field,
+  hasError,
+  disabled,
+  placeholder,
+  minHeight,
+  maxHeight,
+  showToolbar,
+  showValidation,
+  allowFormat,
+  allowMinify,
+}: JsonContentProps) {
+  const validation = useMemo(
+    () => validateJson(field.value || ""),
+    [field.value]
+  );
+
+  const lineCount = useMemo(
+    () => (field.value || "").split("\n").length,
+    [field.value]
+  );
+
+  const handleFormat = useCallback(() => {
+    field.onChange(formatJson(field.value || ""));
+  }, [field]);
+
+  const handleMinify = useCallback(() => {
+    field.onChange(minifyJson(field.value || ""));
+  }, [field]);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(field.value || "");
+  }, [field.value]);
+
+  const containerClasses = useMemo(
+    () =>
+      cn(
+        "rounded-md border bg-background overflow-hidden",
+        hasError && "border-destructive",
+        !validation.isValid && showValidation && "border-amber-500",
+        disabled && "opacity-50"
+      ),
+    [hasError, validation.isValid, showValidation, disabled]
+  );
+
+  const textareaClasses = useMemo(
+    () =>
+      cn(
+        "flex-1 border-0 bg-transparent font-mono text-sm",
+        "focus-visible:ring-0 resize-none leading-6 rounded-none"
+      ),
+    []
+  );
+
+  return (
+    <div className={containerClasses}>
+      {showToolbar && (
+        <JsonToolbar
+          validation={validation}
+          onFormat={handleFormat}
+          onMinify={handleMinify}
+          onCopy={handleCopy}
+          showFormat={allowFormat}
+          showMinify={allowMinify}
+        />
+      )}
+      <div
+        className="flex overflow-auto"
+        style={{ minHeight: `${minHeight}px`, maxHeight: `${maxHeight}px` }}
+      >
+        <LineNumbers count={lineCount} />
+        <Textarea
+          {...field}
+          value={field.value ?? ""}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={textareaClasses}
+          style={{ minHeight: `${minHeight}px` }}
+          spellCheck={false}
+        />
+      </div>
+      {!validation.isValid && validation.error && showValidation && (
+        <div className="border-t bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          <AlertCircle className="h-3 w-3 inline mr-1" />
+          {validation.lineNumber && `Line ${validation.lineNumber}: `}
+          {validation.error}
+        </div>
+      )}
+    </div>
+  );
+});
+
 function FormJsonFieldComponent<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -186,88 +291,36 @@ function FormJsonFieldComponent<
   allowFormat = true,
   allowMinify = true,
 }: FormJsonFieldProps<TFieldValues, TName>) {
-  const handleCopy = useCallback((value: string) => {
-    navigator.clipboard.writeText(value);
-  }, []);
-
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => {
-        const validation = useMemo(
-          () => validateJson(field.value || ""),
-          [field.value]
-        );
-        const lineCount = (field.value || "").split("\n").length;
-
-        const handleFormat = () => {
-          field.onChange(formatJson(field.value || ""));
-        };
-
-        const handleMinify = () => {
-          field.onChange(minifyJson(field.value || ""));
-        };
-
-        return (
-          <FormItem className={className}>
-            {label && (
-              <FormLabel>
-                {label}
-                {required && <span className="text-destructive ml-1">*</span>}
-              </FormLabel>
-            )}
-            <FormControl>
-              <div
-                className={cn(
-                  "rounded-md border bg-background overflow-hidden",
-                  fieldState.error && "border-destructive",
-                  !validation.isValid && showValidation && "border-amber-500",
-                  disabled && "opacity-50"
-                )}
-              >
-                {showToolbar && (
-                  <JsonToolbar
-                    validation={validation}
-                    onFormat={handleFormat}
-                    onMinify={handleMinify}
-                    onCopy={() => handleCopy(field.value || "")}
-                    showFormat={allowFormat}
-                    showMinify={allowMinify}
-                  />
-                )}
-                <div
-                  className="flex overflow-auto"
-                  style={{ minHeight: `${minHeight}px`, maxHeight: `${maxHeight}px` }}
-                >
-                  <LineNumbers count={lineCount} />
-                  <Textarea
-                    {...field}
-                    value={field.value ?? ""}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    className={cn(
-                      "flex-1 border-0 bg-transparent font-mono text-sm",
-                      "focus-visible:ring-0 resize-none leading-6 rounded-none"
-                    )}
-                    style={{ minHeight: `${minHeight}px` }}
-                    spellCheck={false}
-                  />
-                </div>
-                {!validation.isValid && validation.error && showValidation && (
-                  <div className="border-t bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                    <AlertCircle className="h-3 w-3 inline mr-1" />
-                    {validation.lineNumber && `Line ${validation.lineNumber}: `}
-                    {validation.error}
-                  </div>
-                )}
-              </div>
-            </FormControl>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+      render={({ field, fieldState }) => (
+        <FormItem className={className}>
+          {label && (
+            <FormLabel>
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </FormLabel>
+          )}
+          <FormControl>
+            <JsonContent
+              field={field as unknown as ControllerRenderProps<FieldValues, string>}
+              hasError={!!fieldState.error}
+              disabled={disabled}
+              placeholder={placeholder}
+              minHeight={minHeight}
+              maxHeight={maxHeight}
+              showToolbar={showToolbar}
+              showValidation={showValidation}
+              allowFormat={allowFormat}
+              allowMinify={allowMinify}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

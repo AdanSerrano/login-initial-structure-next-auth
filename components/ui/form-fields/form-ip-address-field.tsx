@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useMemo } from "react";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import { memo, useMemo, useCallback } from "react";
+import type { FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -125,6 +125,92 @@ function getPlaceholder(version: IPVersion, allowCIDR: boolean): string {
   return examples[version];
 }
 
+interface IPContentProps {
+  field: ControllerRenderProps<FieldValues, string>;
+  hasError: boolean;
+  disabled?: boolean;
+  placeholder: string;
+  version: IPVersion;
+  allowCIDR: boolean;
+  showValidation: boolean;
+}
+
+const IPContent = memo(function IPContent({
+  field,
+  hasError,
+  disabled,
+  placeholder,
+  version,
+  allowCIDR,
+  showValidation,
+}: IPContentProps) {
+  const validation = useMemo(
+    () => validateIP(field.value || "", version, allowCIDR),
+    [field.value, version, allowCIDR]
+  );
+
+  const inputClasses = useMemo(
+    () => cn("bg-background pl-10 font-mono", hasError && "border-destructive"),
+    [hasError]
+  );
+
+  const badgeClasses = useMemo(
+    () =>
+      cn(
+        "text-xs",
+        validation.valid
+          ? "text-green-600 border-green-600/30"
+          : "text-destructive border-destructive/30"
+      ),
+    [validation.valid]
+  );
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Network className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 z-10 pointer-events-none" />
+        <Input
+          {...field}
+          value={field.value ?? ""}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={inputClasses}
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </div>
+
+      {showValidation && field.value && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className={badgeClasses}>
+            {validation.valid ? (
+              <>
+                <Check className="h-3 w-3 mr-1" />
+                Valid
+              </>
+            ) : (
+              <>
+                <X className="h-3 w-3 mr-1" />
+                {validation.error || "Invalid"}
+              </>
+            )}
+          </Badge>
+          {validation.version && (
+            <Badge variant="secondary" className="text-xs">
+              {validation.version}
+            </Badge>
+          )}
+          {validation.cidr !== undefined && (
+            <Badge variant="secondary" className="text-xs">
+              /{validation.cidr}
+            </Badge>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
 function FormIPAddressFieldComponent<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -150,80 +236,29 @@ function FormIPAddressFieldComponent<
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => {
-        const validation = useMemo(
-          () => validateIP(field.value || "", version, allowCIDR),
-          [field.value]
-        );
-
-        return (
-          <FormItem className={className}>
-            {label && (
-              <FormLabel>
-                {label}
-                {required && <span className="text-destructive ml-1">*</span>}
-              </FormLabel>
-            )}
-            <FormControl>
-              <div className="space-y-2">
-                <div className="relative">
-                  <Network className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60 z-10 pointer-events-none" />
-                  <Input
-                    {...field}
-                    value={field.value ?? ""}
-                    placeholder={defaultPlaceholder}
-                    disabled={disabled}
-                    className={cn(
-                      "bg-background pl-10 font-mono",
-                      fieldState.error && "border-destructive"
-                    )}
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </div>
-
-                {showValidation && field.value && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-xs",
-                        validation.valid
-                          ? "text-green-600 border-green-600/30"
-                          : "text-destructive border-destructive/30"
-                      )}
-                    >
-                      {validation.valid ? (
-                        <>
-                          <Check className="h-3 w-3 mr-1" />
-                          Valid
-                        </>
-                      ) : (
-                        <>
-                          <X className="h-3 w-3 mr-1" />
-                          {validation.error || "Invalid"}
-                        </>
-                      )}
-                    </Badge>
-                    {validation.version && (
-                      <Badge variant="secondary" className="text-xs">
-                        {validation.version}
-                      </Badge>
-                    )}
-                    {validation.cidr !== undefined && (
-                      <Badge variant="secondary" className="text-xs">
-                        /{validation.cidr}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-            </FormControl>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+      render={({ field, fieldState }) => (
+        <FormItem className={className}>
+          {label && (
+            <FormLabel>
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </FormLabel>
+          )}
+          <FormControl>
+            <IPContent
+              field={field as unknown as ControllerRenderProps<FieldValues, string>}
+              hasError={!!fieldState.error}
+              disabled={disabled}
+              placeholder={defaultPlaceholder}
+              version={version}
+              allowCIDR={allowCIDR}
+              showValidation={showValidation}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

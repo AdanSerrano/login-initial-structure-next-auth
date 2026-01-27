@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useMemo, useRef } from "react";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import type { FieldPath, FieldValues, ControllerRenderProps } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -135,6 +135,143 @@ function getMaskedPlaceholder(
   return result;
 }
 
+interface MaskContentProps {
+  field: ControllerRenderProps<FieldValues, string>;
+  hasError: boolean;
+  disabled?: boolean;
+  placeholder: string;
+  pattern: string;
+  definitions: Record<string, RegExp>;
+  showMask: boolean;
+  maskChar: string;
+  alwaysShowMask: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+}
+
+const MaskContent = memo(function MaskContent({
+  field,
+  hasError,
+  disabled,
+  placeholder,
+  pattern,
+  definitions,
+  showMask,
+  maskChar,
+  alwaysShowMask,
+  leftIcon,
+  rightIcon,
+}: MaskContentProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const displayValue = useMemo(() => {
+    const value = field.value || "";
+    if (!showMask || (!alwaysShowMask && !value)) {
+      return value;
+    }
+
+    const masked = applyMask(value, pattern, definitions);
+    const placeholderMask = getMaskedPlaceholder(pattern, maskChar, definitions, 0);
+
+    let display = "";
+    for (let i = 0; i < pattern.length; i++) {
+      if (i < masked.length) {
+        display += masked[i];
+      } else if (alwaysShowMask) {
+        display += placeholderMask[i] || "";
+      }
+    }
+
+    return display || masked;
+  }, [field.value, showMask, alwaysShowMask, pattern, definitions, maskChar]);
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = e.target.value;
+      const rawInput = inputValue.replace(/[^a-zA-Z0-9]/g, "");
+      const maskedValue = applyMask(rawInput, pattern, definitions);
+      field.onChange(maskedValue);
+    },
+    [field, pattern, definitions]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace") {
+        const input = inputRef.current;
+        if (!input) return;
+
+        const selStart = input.selectionStart ?? 0;
+        const currentValue = field.value || "";
+
+        if (selStart > 0 && selStart <= currentValue.length) {
+          let deleteIndex = selStart - 1;
+
+          while (deleteIndex >= 0) {
+            const patternChar = pattern[deleteIndex];
+            if (definitions[patternChar]) {
+              break;
+            }
+            deleteIndex--;
+          }
+
+          if (deleteIndex >= 0) {
+            const newValue =
+              currentValue.slice(0, deleteIndex) + currentValue.slice(selStart);
+            const remasked = applyMask(
+              getRawValue(newValue, pattern, definitions),
+              pattern,
+              definitions
+            );
+            field.onChange(remasked);
+
+            e.preventDefault();
+            requestAnimationFrame(() => {
+              input.setSelectionRange(deleteIndex, deleteIndex);
+            });
+          }
+        }
+      }
+    },
+    [field, pattern, definitions]
+  );
+
+  const inputClasses = useMemo(
+    () =>
+      cn(
+        "bg-background font-mono",
+        leftIcon && "pl-10",
+        rightIcon && "pr-10",
+        hasError && "border-destructive"
+      ),
+    [leftIcon, rightIcon, hasError]
+  );
+
+  return (
+    <div className="relative">
+      {leftIcon && (
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 z-10 pointer-events-none">
+          {leftIcon}
+        </div>
+      )}
+      <Input
+        ref={inputRef}
+        value={displayValue}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={inputClasses}
+      />
+      {rightIcon && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/60 z-10 pointer-events-none">
+          {rightIcon}
+        </div>
+      )}
+    </div>
+  );
+});
+
 function FormMaskFieldComponent<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -155,8 +292,6 @@ function FormMaskFieldComponent<
   leftIcon,
   rightIcon,
 }: FormMaskFieldProps<TFieldValues, TName>) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const maskDefinition = useMemo((): MaskDefinition => {
     if (preset) {
       return PRESET_MASKS[preset];
@@ -183,114 +318,33 @@ function FormMaskFieldComponent<
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => {
-        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const inputValue = e.target.value;
-          const rawInput = inputValue.replace(/[^a-zA-Z0-9]/g, "");
-          const maskedValue = applyMask(rawInput, pattern, definitions);
-          field.onChange(maskedValue);
-        };
-
-        const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-          if (e.key === "Backspace") {
-            const input = inputRef.current;
-            if (!input) return;
-
-            const selStart = input.selectionStart ?? 0;
-            const currentValue = field.value || "";
-
-            if (selStart > 0 && selStart <= currentValue.length) {
-              let deleteIndex = selStart - 1;
-
-              while (deleteIndex >= 0) {
-                const patternChar = pattern[deleteIndex];
-                if (definitions[patternChar]) {
-                  break;
-                }
-                deleteIndex--;
-              }
-
-              if (deleteIndex >= 0) {
-                const newValue =
-                  currentValue.slice(0, deleteIndex) + currentValue.slice(selStart);
-                const remasked = applyMask(
-                  getRawValue(newValue, pattern, definitions),
-                  pattern,
-                  definitions
-                );
-                field.onChange(remasked);
-
-                e.preventDefault();
-                requestAnimationFrame(() => {
-                  input.setSelectionRange(deleteIndex, deleteIndex);
-                });
-              }
-            }
-          }
-        };
-
-        const displayValue = useMemo(() => {
-          const value = field.value || "";
-          if (!showMask || (!alwaysShowMask && !value)) {
-            return value;
-          }
-
-          const masked = applyMask(value, pattern, definitions);
-          const placeholder = getMaskedPlaceholder(pattern, maskChar, definitions, 0);
-
-          let display = "";
-          for (let i = 0; i < pattern.length; i++) {
-            if (i < masked.length) {
-              display += masked[i];
-            } else if (alwaysShowMask) {
-              display += placeholder[i] || "";
-            }
-          }
-
-          return display || masked;
-        }, [field.value, showMask, alwaysShowMask, pattern, definitions, maskChar]);
-
-        return (
-          <FormItem className={className}>
-            {label && (
-              <FormLabel>
-                {label}
-                {required && <span className="text-destructive ml-1">*</span>}
-              </FormLabel>
-            )}
-            <FormControl>
-              <div className="relative">
-                {leftIcon && (
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/60 z-10 pointer-events-none">
-                    {leftIcon}
-                  </div>
-                )}
-                <Input
-                  ref={inputRef}
-                  value={displayValue}
-                  onChange={handleChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder={displayPlaceholder}
-                  disabled={disabled}
-                  className={cn(
-                    "bg-background font-mono",
-                    leftIcon && "pl-10",
-                    rightIcon && "pr-10",
-                    fieldState.error && "border-destructive"
-                  )}
-                />
-                {rightIcon && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/60 z-10 pointer-events-none">
-                    {rightIcon}
-                  </div>
-                )}
-              </div>
-            </FormControl>
-            {description && <FormDescription>{description}</FormDescription>}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+      render={({ field, fieldState }) => (
+        <FormItem className={className}>
+          {label && (
+            <FormLabel>
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </FormLabel>
+          )}
+          <FormControl>
+            <MaskContent
+              field={field as unknown as ControllerRenderProps<FieldValues, string>}
+              hasError={!!fieldState.error}
+              disabled={disabled}
+              placeholder={displayPlaceholder}
+              pattern={pattern}
+              definitions={definitions}
+              showMask={showMask}
+              maskChar={maskChar}
+              alwaysShowMask={alwaysShowMask}
+              leftIcon={leftIcon}
+              rightIcon={rightIcon}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

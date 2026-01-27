@@ -108,6 +108,39 @@ const TransferItem = memo(function TransferItem({
   );
 });
 
+interface SelectAllRowProps {
+  allChecked: boolean;
+  someChecked: boolean;
+  disabled?: boolean;
+  onSelectAll: () => void;
+}
+
+const SelectAllRow = memo(function SelectAllRow({
+  allChecked,
+  someChecked,
+  disabled,
+  onSelectAll,
+}: SelectAllRowProps) {
+  const handleClick = useCallback(() => {
+    if (!disabled) {
+      onSelectAll();
+    }
+  }, [disabled, onSelectAll]);
+
+  return (
+    <div
+      className={cn(
+        "px-3 py-2 border-b flex items-center gap-2 cursor-pointer hover:bg-accent/50",
+        disabled && "cursor-not-allowed opacity-50"
+      )}
+      onClick={handleClick}
+    >
+      <SimpleCheckbox checked={allChecked} indeterminate={someChecked && !allChecked} />
+      <span className="text-sm">Select all</span>
+    </div>
+  );
+});
+
 interface TransferListProps {
   title: string;
   items: FormFieldOption<string>[];
@@ -188,16 +221,12 @@ const TransferList = memo(function TransferList({
       )}
 
       {showSelectAll && items.length > 0 && (
-        <div
-          className={cn(
-            "px-3 py-2 border-b flex items-center gap-2 cursor-pointer hover:bg-accent/50",
-            disabled && "cursor-not-allowed opacity-50"
-          )}
-          onClick={() => !disabled && onSelectAll()}
-        >
-          <SimpleCheckbox checked={allChecked} indeterminate={someChecked && !allChecked} />
-          <span className="text-sm">Select all</span>
-        </div>
+        <SelectAllRow
+          allChecked={allChecked}
+          someChecked={someChecked}
+          disabled={disabled}
+          onSelectAll={onSelectAll}
+        />
       )}
 
       <div className="overflow-y-auto p-1" style={{ height }}>
