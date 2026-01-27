@@ -8,18 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  FormTextField,
+  FormSubmitButton,
+} from "@/components/ui/form-fields";
 import { ResendVerificationViewModel } from "../../view-model/resend-verification.view-model";
-import { cn } from "@/lib/utils";
-import { CheckCircle, Loader2, Mail } from "lucide-react";
+import { CheckCircle, Mail } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { memo } from "react";
 import { useTranslations } from "next-intl";
@@ -28,7 +23,8 @@ export const ResendVerificationForm = memo(function ResendVerificationForm() {
   const t = useTranslations("ResendVerification");
   const tAuth = useTranslations("Auth");
   const tCommon = useTranslations("Common");
-  const { handleSubmit, form, isPending, sent } = ResendVerificationViewModel();
+  const { handleSubmit, form, isPending, sent } =
+    ResendVerificationViewModel();
 
   if (sent) {
     return <SuccessState />;
@@ -50,48 +46,23 @@ export const ResendVerificationForm = memo(function ResendVerificationForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
+            <FormTextField
               control={form.control}
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{tAuth("email")}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder={tAuth("emailPlaceholder")}
-                      autoComplete="email"
-                      aria-label={tAuth("email")}
-                      {...field}
-                      disabled={isPending}
-                      className={cn(
-                        form.formState.errors.email && "border-destructive"
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              type="email"
+              label={tAuth("email")}
+              placeholder={tAuth("emailPlaceholder")}
+              autoComplete="email"
+              disabled={isPending}
             />
 
-            <Button
-              type="submit"
-              disabled={isPending}
-              aria-busy={isPending}
-              className="w-full"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                  {tCommon("sending")}
-                </>
-              ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {t("sendLink")}
-                </>
-              )}
-            </Button>
+            <FormSubmitButton
+              isPending={isPending}
+              text={t("sendLink")}
+              loadingText={tCommon("sending")}
+              icon={<Mail className="h-4 w-4" aria-hidden="true" />}
+              fullWidth
+            />
 
             <p className="text-center text-sm text-muted-foreground">
               {t("alreadyVerified")}{" "}
@@ -122,7 +93,10 @@ function SuccessState() {
           className="flex flex-col items-center space-y-6 text-center"
         >
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-            <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" aria-hidden="true" />
+            <CheckCircle
+              className="h-8 w-8 text-green-600 dark:text-green-400"
+              aria-hidden="true"
+            />
           </div>
 
           <div className="space-y-2">
@@ -136,12 +110,13 @@ function SuccessState() {
 
           <div className="rounded-lg border bg-muted/50 p-4 w-full">
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-primary mt-0.5 shrink-0" aria-hidden="true" />
+              <Mail
+                className="h-5 w-5 text-primary mt-0.5 shrink-0"
+                aria-hidden="true"
+              />
               <div className="text-left text-sm">
                 <p className="font-medium">{t("checkInbox")}</p>
-                <p className="text-muted-foreground mt-1">
-                  {t("linkExpiry")}
-                </p>
+                <p className="text-muted-foreground mt-1">{t("linkExpiry")}</p>
               </div>
             </div>
           </div>

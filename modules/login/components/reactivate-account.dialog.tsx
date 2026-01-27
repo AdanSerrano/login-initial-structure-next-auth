@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { memo, useCallback, useRef, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FormErrorAlert } from "@/components/ui/form-fields";
 import { Loader2, RefreshCcw, Calendar, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { reactivateAccountAction } from "@/modules/user/actions/user.actions";
@@ -25,7 +26,7 @@ interface ReactivateAccountDialogProps {
   onSuccess: () => void;
 }
 
-export function ReactivateAccountDialog({
+export const ReactivateAccountDialog = memo(function ReactivateAccountDialog({
   isOpen,
   onOpenChange,
   email,
@@ -37,24 +38,27 @@ export function ReactivateAccountDialog({
   const tCommon = useTranslations("Common");
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const errorRef = useRef<string | null>(null);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(locale, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(new Date(date));
-  };
+  const formatDate = useCallback(
+    (date: Date) => {
+      return new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }).format(new Date(date));
+    },
+    [locale]
+  );
 
-  const handleReactivate = () => {
-    setError(null);
+  const handleReactivate = useCallback(() => {
+    errorRef.current = null;
     startTransition(async () => {
       try {
         const result = await reactivateAccountAction(email);
 
         if (result?.error) {
-          setError(result.error);
+          errorRef.current = result.error;
           toast.error(result.error);
           return;
         }
@@ -65,17 +69,17 @@ export function ReactivateAccountDialog({
       } catch (err) {
         const message =
           err instanceof Error ? err.message : tCommon("error");
-        setError(message);
+        errorRef.current = message;
         toast.error(message);
       }
     });
-  };
+  }, [email, onOpenChange, onSuccess, tCommon]);
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/20">
             <AlertTriangle className="h-7 w-7 text-amber-600" />
           </div>
           <AlertDialogTitle className="text-center">
@@ -83,9 +87,7 @@ export function ReactivateAccountDialog({
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4 text-center">
-              <p>
-                {t("description")}
-              </p>
+              <p>{t("description")}</p>
 
               {scheduledDeletionDate && (
                 <div className="rounded-lg bg-muted p-4">
@@ -98,22 +100,16 @@ export function ReactivateAccountDialog({
                       {daysRemaining === 0
                         ? t("deletesToday")
                         : daysRemaining === 1
-                        ? t("daysLeft", { count: 1 })
-                        : t("daysLeftPlural", { count: daysRemaining })}
+                          ? t("daysLeft", { count: 1 })
+                          : t("daysLeftPlural", { count: daysRemaining })}
                     </p>
                   )}
                 </div>
               )}
 
-              <p className="text-sm">
-                {t("reactivateQuestion")}
-              </p>
+              <p className="text-sm">{t("reactivateQuestion")}</p>
 
-              {error && (
-                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
+              <FormErrorAlert error={errorRef.current} />
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -142,4 +138,4 @@ export function ReactivateAccountDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+});

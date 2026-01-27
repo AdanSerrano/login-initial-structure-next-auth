@@ -2,21 +2,14 @@
 
 import { memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-  InputOTPSeparator,
-} from "@/components/ui/input-otp";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+  FormOTPField,
+  FormErrorAlert,
+  FormSubmitButton,
+} from "@/components/ui/form-fields";
 import { Spinner } from "@/components/ui/spinner";
-import { Mail, ArrowLeft, RefreshCw, AlertCircle, ShieldCheck } from "lucide-react";
+import { Mail, ArrowLeft, RefreshCw, ShieldCheck } from "lucide-react";
 import { useTwoFactor } from "../../hooks/two-factor.hook";
 import { useTranslations } from "next-intl";
 
@@ -51,6 +44,8 @@ export const TwoFactorDialogContent = memo(function TwoFactorDialogContent({
   );
 
   const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+  const codeValue = form.watch("code");
+  const isCodeComplete = codeValue?.length === 6;
 
   return (
     <div className="space-y-6">
@@ -59,61 +54,34 @@ export const TwoFactorDialogContent = memo(function TwoFactorDialogContent({
           <Mail className="h-4 w-4 text-primary" aria-hidden="true" />
         </div>
         <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground">{t("codeSentTo")}</span>
-          <span className="text-sm font-medium text-foreground">{maskedEmail}</span>
+          <span className="text-xs text-muted-foreground">
+            {t("codeSentTo")}
+          </span>
+          <span className="text-sm font-medium text-foreground">
+            {maskedEmail}
+          </span>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {error && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className="flex items-center gap-3 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive border border-destructive/20"
-            >
-              <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span>{error}</span>
-            </div>
-          )}
+          <FormErrorAlert error={error} />
 
-          <FormField
+          <FormOTPField
             control={form.control}
             name="code"
-            render={({ field }) => (
-              <FormItem className="flex flex-col items-center py-2">
-                <FormControl>
-                  <InputOTP
-                    maxLength={6}
-                    value={field.value}
-                    onChange={field.onChange}
-                    disabled={isPending}
-                    autoFocus
-                    aria-label={t("codeLabel")}
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                    </InputOTPGroup>
-                    <InputOTPSeparator />
-                    <InputOTPGroup>
-                      <InputOTPSlot index={3} />
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </FormControl>
-                <FormMessage className="mt-3" />
-              </FormItem>
-            )}
+            length={6}
+            showSeparator
+            disabled={isPending}
           />
 
           <div className="flex items-center justify-center">
             {countdown > 0 ? (
               <div className="flex items-center gap-2 rounded-full bg-muted/50 px-4 py-2">
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                  <span className="text-xs font-bold text-primary">{countdown}</span>
+                  <span className="text-xs font-bold text-primary">
+                    {countdown}
+                  </span>
                 </div>
                 <span className="text-sm text-muted-foreground">
                   {t("secondsToResend")}
@@ -145,24 +113,15 @@ export const TwoFactorDialogContent = memo(function TwoFactorDialogContent({
           </div>
 
           <div className="flex flex-col gap-3 pt-2">
-            <Button
-              type="submit"
-              className="w-full h-11 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
-              disabled={isPending || form.watch("code").length !== 6}
-              aria-busy={isPending}
-            >
-              {isPending ? (
-                <>
-                  <Spinner className="mr-2 h-5 w-5" aria-hidden="true" />
-                  {t("verifying")}
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="mr-2 h-5 w-5" aria-hidden="true" />
-                  {t("verifyCode")}
-                </>
-              )}
-            </Button>
+            <FormSubmitButton
+              isPending={isPending}
+              text={t("verifyCode")}
+              loadingText={t("verifying")}
+              icon={<ShieldCheck className="h-5 w-5" aria-hidden="true" />}
+              disabled={!isCodeComplete}
+              className="h-11 text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
+              fullWidth
+            />
 
             {onBack && (
               <Button

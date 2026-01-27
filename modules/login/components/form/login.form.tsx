@@ -8,20 +8,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  FormTextField,
+  FormPasswordField,
+  FormErrorAlert,
+  FormSubmitButton,
+} from "@/components/ui/form-fields";
 import { LoginViewModel } from "@/modules/login/view-model/login.view-model";
-import { cn } from "@/lib/utils";
-import { Loader2, LogIn, ShieldCheck, KeyRound, Wand2, AlertTriangle } from "lucide-react";
+import {
+  LogIn,
+  ShieldCheck,
+  KeyRound,
+  Wand2,
+  AlertTriangle,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { PasswordInput } from "@/components/ui/pasword-input";
 import { memo, Suspense } from "react";
 import { TwoFactorDialogContent } from "@/modules/two-factor/components/form/two-factor.form";
 import { TwoFactorSkeleton } from "@/modules/two-factor/components/two-factor.skeleton";
@@ -63,12 +65,13 @@ export const LoginForm = memo(function LoginForm() {
         >
           <DialogHeader className="text-center sm:text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 via-primary/10 to-primary/5 ring-4 ring-primary/10 shadow-lg mb-2">
-              <ShieldCheck className="h-8 w-8 text-primary" aria-hidden="true" />
+              <ShieldCheck
+                className="h-8 w-8 text-primary"
+                aria-hidden="true"
+              />
             </div>
             <DialogTitle className="text-xl">{tTwoFactor("title")}</DialogTitle>
-            <DialogDescription>
-              {tTwoFactor("subtitle")}
-            </DialogDescription>
+            <DialogDescription>{tTwoFactor("subtitle")}</DialogDescription>
           </DialogHeader>
           <Suspense fallback={<TwoFactorSkeleton />}>
             {twoFactor.email && (
@@ -99,7 +102,10 @@ export const LoginForm = memo(function LoginForm() {
               className="flex items-center gap-3 rounded-xl bg-amber-500/10 px-4 py-3 border border-amber-500/20"
             >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-                <AlertTriangle className="h-5 w-5 text-amber-600" aria-hidden="true" />
+                <AlertTriangle
+                  className="h-5 w-5 text-amber-600"
+                  aria-hidden="true"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">
@@ -115,14 +121,21 @@ export const LoginForm = memo(function LoginForm() {
           {isTwoFactorPending && !twoFactor.dialogOpen && (
             <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 border border-primary/20">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
-                <KeyRound className="h-5 w-5 text-primary" aria-hidden="true" />
+                <KeyRound
+                  className="h-5 w-5 text-primary"
+                  aria-hidden="true"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">
                   {t("verificationPending")}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {t("codeSentTo", { email: twoFactor.email?.replace(/(.{2})(.*)(@.*)/, "$1***$3") || "" })}
+                  {t("codeSentTo", {
+                    email:
+                      twoFactor.email?.replace(/(.{2})(.*)(@.*)/, "$1***$3") ||
+                      "",
+                  })}
                 </p>
               </div>
               <Button
@@ -136,90 +149,40 @@ export const LoginForm = memo(function LoginForm() {
             </div>
           )}
 
-          <FormField
+          <FormTextField
             control={form.control}
             name="identifier"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("emailOrUsername")}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    placeholder={t("emailOrUsernamePlaceholder")}
-                    autoComplete="username"
-                    aria-label={t("emailOrUsername")}
-                    {...field}
-                    disabled={isPending}
-                    className={cn(
-                      form.formState.errors.identifier && "border-destructive"
-                    )}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={t("emailOrUsername")}
+            placeholder={t("emailOrUsernamePlaceholder")}
+            autoComplete="username"
+            disabled={isPending}
           />
 
-          <FormField
+          <FormPasswordField
             control={form.control}
             name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel>{t("password")}</FormLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
-                  >
-                    {t("forgotPassword")}
-                  </Link>
-                </div>
-                <FormControl>
-                  <PasswordInput
-                    placeholder={t("passwordPlaceholder")}
-                    autoComplete="current-password"
-                    aria-label={t("password")}
-                    {...field}
-                    disabled={isPending}
-                    className={cn(
-                      "pr-10",
-                      form.formState.errors.password && "border-destructive"
-                    )}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={t("password")}
+            autoComplete="current-password"
+            disabled={isPending}
+            labelExtra={
+              <Link
+                href="/forgot-password"
+                className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
+              >
+                {t("forgotPassword")}
+              </Link>
+            }
           />
 
-          {error && (
-            <div
-              role="alert"
-              aria-live="polite"
-              className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20"
-            >
-              {error}
-            </div>
-          )}
+          <FormErrorAlert error={error} />
 
-          <Button
-            type="submit"
-            disabled={isPending}
-            aria-busy={isPending}
-            className="w-full"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-                {t("loggingIn")}
-              </>
-            ) : (
-              <>
-                <LogIn className="mr-2 h-4 w-4" aria-hidden="true" />
-                {t("login")}
-              </>
-            )}
-          </Button>
+          <FormSubmitButton
+            isPending={isPending}
+            text={t("login")}
+            loadingText={t("loggingIn")}
+            icon={<LogIn className="h-4 w-4" aria-hidden="true" />}
+            fullWidth
+          />
 
           <Link
             href="/magic-link"

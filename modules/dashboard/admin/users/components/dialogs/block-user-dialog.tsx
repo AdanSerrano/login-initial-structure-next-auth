@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { memo, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AlertTriangle, Ban, Unlock } from "lucide-react";
+import { FormAlert } from "@/components/ui/form-fields";
+import { Ban, Unlock, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { AdminUser } from "../../types/admin-users.types";
 
@@ -37,10 +38,12 @@ export const BlockUserDialog = memo(function BlockUserDialog({
 }: BlockUserDialogProps) {
   const t = useTranslations("BlockUserDialog");
   const tCommon = useTranslations("Common");
-  const [reason, setReason] = useState("");
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
 
   const handleClose = useCallback(() => {
-    setReason("");
+    if (reasonRef.current) {
+      reasonRef.current.value = "";
+    }
     onClose();
   }, [onClose]);
 
@@ -48,11 +51,12 @@ export const BlockUserDialog = memo(function BlockUserDialog({
     if (!user) return;
 
     if (mode === "block") {
-      onBlock(user.id, reason || undefined);
+      const reason = reasonRef.current?.value || undefined;
+      onBlock(user.id, reason);
     } else {
       onUnblock(user.id);
     }
-  }, [user, mode, reason, onBlock, onUnblock]);
+  }, [user, mode, onBlock, onUnblock]);
 
   if (!user) return null;
 
@@ -85,21 +89,16 @@ export const BlockUserDialog = memo(function BlockUserDialog({
 
         {isBlocking && (
           <div className="space-y-4">
-            <div className="flex items-start gap-2 rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
-              <AlertTriangle className="mt-0.5 h-4 w-4 text-yellow-600" />
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                {t("blockWarning")}
-              </p>
-            </div>
+            <FormAlert variant="warning" message={t("blockWarning")} />
 
             <div className="space-y-2">
               <Label htmlFor="reason">{t("blockReason")}</Label>
               <Textarea
+                ref={reasonRef}
                 id="reason"
                 placeholder={t("blockReasonPlaceholder")}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
                 rows={3}
+                disabled={isPending}
               />
             </div>
           </div>
@@ -114,11 +113,16 @@ export const BlockUserDialog = memo(function BlockUserDialog({
             onClick={handleConfirm}
             disabled={isPending}
           >
-            {isPending
-              ? tCommon("processing")
-              : isBlocking
-                ? t("blockButton")
-                : t("unblockButton")}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {tCommon("processing")}
+              </>
+            ) : isBlocking ? (
+              t("blockButton")
+            ) : (
+              t("unblockButton")
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

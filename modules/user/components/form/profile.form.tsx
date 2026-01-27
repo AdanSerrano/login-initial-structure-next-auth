@@ -1,18 +1,13 @@
 "use client";
 
 import { memo, useCallback, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
+  FormTextField,
+  FormErrorAlert,
+  FormSubmitButton,
+  FormButtonGroup,
+} from "@/components/ui/form-fields";
 import { ProfileViewModel } from "../../view-model/user.view-model";
 import { useTranslations } from "next-intl";
 import { ProfileImageUpload } from "../profile-image-upload";
@@ -44,7 +39,6 @@ export const ProfileForm = memo(function ProfileForm({
 
   const handleImageChange = useCallback(
     (imageUrl: string) => {
-      // Update form value so the UI stays in sync
       form.setValue("image", imageUrl, { shouldDirty: false });
     },
     [form]
@@ -81,66 +75,33 @@ export const ProfileForm = memo(function ProfileForm({
         </div>
 
         <div className="space-y-4">
-          <FormField
+          <FormTextField
             control={form.control}
             name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("fullName")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("fullNamePlaceholder")}
-                    disabled={isPending}
-                    className="bg-background"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={t("fullName")}
+            placeholder={t("fullNamePlaceholder")}
+            disabled={isPending}
           />
 
-          <FormField
+          <FormTextField
             control={form.control}
             name="userName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("username")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={t("usernamePlaceholder")}
-                    disabled={isPending}
-                    className="bg-background"
-                  />
-                </FormControl>
-                <FormDescription className="text-xs">
-                  {t("usernameHint")}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={t("username")}
+            placeholder={t("usernamePlaceholder")}
+            description={t("usernameHint")}
+            disabled={isPending}
           />
         </div>
 
-        {error && (
-          <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
+        <FormErrorAlert error={error} />
 
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {tCommon("saving")}
-              </>
-            ) : (
-              t("saveChanges")
-            )}
-          </Button>
-        </div>
+        <FormButtonGroup align="right">
+          <FormSubmitButton
+            isPending={isPending}
+            text={t("saveChanges")}
+            loadingText={tCommon("saving")}
+          />
+        </FormButtonGroup>
       </form>
     </Form>
   );

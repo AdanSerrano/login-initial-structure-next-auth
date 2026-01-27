@@ -8,18 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { PasswordInput } from "@/components/ui/pasword-input";
+  FormPasswordField,
+  FormErrorAlert,
+  FormSubmitButton,
+} from "@/components/ui/form-fields";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
-import { cn } from "@/lib/utils";
-import { Loader2, KeyRound, CheckCircle } from "lucide-react";
+import { KeyRound, CheckCircle } from "lucide-react";
 import { ResetPasswordViewModel } from "../../view-model/reset-password.view-model";
 import { memo, useDeferredValue } from "react";
 import { Link } from "@/i18n/navigation";
@@ -33,7 +29,6 @@ export const ResetPasswordForm = memo(function ResetPasswordForm({
   token,
 }: ResetPasswordFormProps) {
   const t = useTranslations("ResetPassword");
-  const tAuth = useTranslations("Auth");
   const tCommon = useTranslations("Common");
   const { handleSubmit, form, isPending, error, success } =
     ResetPasswordViewModel(token);
@@ -63,87 +58,34 @@ export const ResetPasswordForm = memo(function ResetPasswordForm({
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-5"
           >
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("newPasswordLabel")}</FormLabel>
-                  <FormControl>
-                    <PasswordInput
-                      placeholder={tAuth("passwordPlaceholder")}
-                      autoComplete="new-password"
-                      aria-label={tAuth("newPassword")}
-                      {...field}
-                      disabled={isPending}
-                      className={cn(
-                        "pr-10",
-                        form.formState.errors.password && "border-destructive"
-                      )}
-                    />
-                  </FormControl>
-                  <PasswordStrengthIndicator password={deferredPassword || ""} />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <FormPasswordField
+                control={form.control}
+                name="password"
+                label={t("newPasswordLabel")}
+                autoComplete="new-password"
+                disabled={isPending}
+              />
+              <PasswordStrengthIndicator password={deferredPassword || ""} />
+            </div>
 
-            <FormField
+            <FormPasswordField
               control={form.control}
               name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("confirmPasswordLabel")}</FormLabel>
-                  <FormControl>
-                    <PasswordInput
-                      placeholder={tAuth("passwordPlaceholder")}
-                      autoComplete="new-password"
-                      aria-label={tAuth("confirmPassword")}
-                      {...field}
-                      disabled={isPending}
-                      className={cn(
-                        "pr-10",
-                        form.formState.errors.confirmPassword &&
-                          "border-destructive"
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label={t("confirmPasswordLabel")}
+              autoComplete="new-password"
+              disabled={isPending}
             />
 
-            {error && (
-              <div
-                role="alert"
-                aria-live="polite"
-                className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20"
-              >
-                {error}
-              </div>
-            )}
+            <FormErrorAlert error={error} />
 
-            <Button
-              type="submit"
-              disabled={isPending}
-              aria-busy={isPending}
-              className="w-full"
-            >
-              {isPending ? (
-                <>
-                  <Loader2
-                    className="mr-2 h-4 w-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  {tCommon("updating")}
-                </>
-              ) : (
-                <>
-                  <KeyRound className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {t("resetButton")}
-                </>
-              )}
-            </Button>
+            <FormSubmitButton
+              isPending={isPending}
+              text={t("resetButton")}
+              loadingText={tCommon("updating")}
+              icon={<KeyRound className="h-4 w-4" aria-hidden="true" />}
+              fullWidth
+            />
           </form>
         </Form>
       </CardContent>

@@ -1,18 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  FormTextField,
+  FormErrorAlert,
+  FormSubmitButton,
+} from "@/components/ui/form-fields";
 import { MagicLinkViewModel } from "@/modules/magic-link/view-model/magic-link.view-model";
-import { cn } from "@/lib/utils";
-import { Loader2, Wand2, CheckCircle, KeyRound } from "lucide-react";
+import { Wand2, CheckCircle, KeyRound } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { memo } from "react";
 import { useTranslations } from "next-intl";
@@ -20,7 +16,8 @@ import { useTranslations } from "next-intl";
 export const MagicLinkForm = memo(function MagicLinkForm() {
   const t = useTranslations("MagicLink");
   const tAuth = useTranslations("Auth");
-  const { handleSubmit, form, isPending, error, success } = MagicLinkViewModel();
+  const { handleSubmit, form, isPending, error, success } =
+    MagicLinkViewModel();
 
   if (success) {
     return (
@@ -30,12 +27,8 @@ export const MagicLinkForm = memo(function MagicLinkForm() {
         </div>
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">{t("successTitle")}</h3>
-          <p className="text-sm text-muted-foreground">
-            {success}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {t("successMessage")}
-          </p>
+          <p className="text-sm text-muted-foreground">{success}</p>
+          <p className="text-xs text-muted-foreground">{t("successMessage")}</p>
         </div>
         <Button
           type="button"
@@ -53,63 +46,28 @@ export const MagicLinkForm = memo(function MagicLinkForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
         <div className="text-center space-y-2 pb-2">
-          <p className="text-sm text-muted-foreground">
-            {t("subtitle")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
 
-        <FormField
+        <FormTextField
           control={form.control}
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{tAuth("email")}</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder={tAuth("emailPlaceholder")}
-                  autoComplete="email"
-                  aria-label={tAuth("email")}
-                  {...field}
-                  disabled={isPending}
-                  className={cn(
-                    form.formState.errors.email && "border-destructive"
-                  )}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          type="email"
+          label={tAuth("email")}
+          placeholder={tAuth("emailPlaceholder")}
+          autoComplete="email"
+          disabled={isPending}
         />
 
-        {error && (
-          <div
-            role="alert"
-            aria-live="polite"
-            className="rounded-md bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20"
-          >
-            {error}
-          </div>
-        )}
+        <FormErrorAlert error={error} />
 
-        <Button
-          type="submit"
-          disabled={isPending}
-          aria-busy={isPending}
-          className="w-full"
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              {t("sendingLink")}
-            </>
-          ) : (
-            <>
-              <Wand2 className="mr-2 h-4 w-4" aria-hidden="true" />
-              {t("sendLink")}
-            </>
-          )}
-        </Button>
+        <FormSubmitButton
+          isPending={isPending}
+          text={t("sendLink")}
+          loadingText={t("sendingLink")}
+          icon={<Wand2 className="h-4 w-4" aria-hidden="true" />}
+          fullWidth
+        />
 
         <Link
           href="/login"

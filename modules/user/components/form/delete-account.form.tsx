@@ -1,16 +1,13 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+  FormTextField,
+  FormPasswordField,
+  FormErrorAlert,
+} from "@/components/ui/form-fields";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +26,7 @@ export const DeleteAccountForm = memo(function DeleteAccountForm() {
   const t = useTranslations("DeleteAccount");
   const tCommon = useTranslations("Common");
   const { handleSubmit, form, isPending, error } = DeleteAccountViewModel();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const dialogOpenRef = useRef(false);
 
   const onSubmit = async () => {
     const values = form.getValues();
@@ -59,60 +56,46 @@ export const DeleteAccountForm = memo(function DeleteAccountForm() {
 
       <Form {...form}>
         <form className="space-y-4">
-          <FormField
+          <FormPasswordField
             control={form.control}
             name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("confirmPassword")}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder="••••••••"
-                    disabled={isPending}
-                    className="bg-background"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={t("confirmPassword")}
+            autoComplete="current-password"
+            disabled={isPending}
           />
 
-          <FormField
+          <FormTextField
             control={form.control}
             name="confirmation"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  {t("typeDelete")} <span className="font-mono font-bold text-destructive">{deleteWord}</span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder={deleteWord}
-                    disabled={isPending}
-                    className="bg-background font-mono"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label={
+              <>
+                {t("typeDelete")}{" "}
+                <span className="font-mono font-bold text-destructive">
+                  {deleteWord}
+                </span>
+              </>
+            }
+            placeholder={deleteWord}
+            disabled={isPending}
+            inputClassName="font-mono"
           />
 
-          {error && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+          <FormErrorAlert error={error} />
 
-          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialog
+            open={dialogOpenRef.current}
+            onOpenChange={(open) => {
+              dialogOpenRef.current = open;
+            }}
+          >
             <Button
               type="button"
               variant="destructive"
               className="w-full"
               disabled={isPending || !canDelete}
-              onClick={() => setIsDialogOpen(true)}
+              onClick={() => {
+                dialogOpenRef.current = true;
+              }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               {t("deleteButton")}

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { AdminUser } from "../../types/admin-users.types";
 
@@ -33,21 +33,44 @@ export const DeleteUserDialog = memo(function DeleteUserDialog({
 }: DeleteUserDialogProps) {
   const t = useTranslations("DeleteUserDialog");
   const tCommon = useTranslations("Common");
-  const [reason, setReason] = useState("");
+  const reasonRef = useRef<HTMLTextAreaElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
+  const validateReason = useCallback(() => {
+    const reason = reasonRef.current?.value.trim() || "";
+    const isValid = reason.length >= 5;
+
+    if (errorRef.current) {
+      errorRef.current.classList.toggle("hidden", isValid || reason.length === 0);
+    }
+
+    return isValid ? reason : null;
+  }, []);
 
   const handleConfirm = useCallback(() => {
     if (!user) return;
-    onDelete(user.id, reason.trim());
-  }, [user, onDelete, reason]);
+    const reason = validateReason();
+    if (reason) {
+      onDelete(user.id, reason);
+    }
+  }, [user, onDelete, validateReason]);
 
   const handleClose = useCallback(() => {
-    setReason("");
+    if (reasonRef.current) {
+      reasonRef.current.value = "";
+    }
+    if (errorRef.current) {
+      errorRef.current.classList.add("hidden");
+    }
     onClose();
   }, [onClose]);
 
+  const handleReasonChange = useCallback(() => {
+    validateReason();
+  }, [validateReason]);
+
   if (!user) return null;
 
-  const isReasonValid = reason.trim().length >= 5;
   const userName = user.name || user.email || "";
 
   return (
@@ -64,10 +87,10 @@ export const DeleteUserDialog = memo(function DeleteUserDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-start gap-2 rounded-md bg-yellow-50 p-3 dark:bg-yellow-900/20">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+          <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <div className="text-sm">
-              <p className="font-medium text-yellow-800 dark:text-yellow-200">
+              <p className="font-medium text-amber-800 dark:text-amber-200">
                 {t("warning1")}
               </p>
               <ul className="mt-2 list-inside list-disc text-muted-foreground space-y-1">
@@ -85,18 +108,19 @@ export const DeleteUserDialog = memo(function DeleteUserDialog({
               {t("reasonLabel")} <span className="text-destructive">*</span>
             </Label>
             <Textarea
+              ref={reasonRef}
               id="delete-reason"
               placeholder={t("reasonPlaceholder")}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
               className="min-h-[80px] resize-none"
               disabled={isPending}
+              onChange={handleReasonChange}
             />
-            {reason.length > 0 && !isReasonValid && (
-              <p className="text-xs text-destructive">
-                {t("reasonError")}
-              </p>
-            )}
+            <p
+              ref={errorRef}
+              className="text-xs text-destructive hidden"
+            >
+              {t("reasonError")}
+            </p>
           </div>
         </div>
 
@@ -107,9 +131,16 @@ export const DeleteUserDialog = memo(function DeleteUserDialog({
           <Button
             variant="destructive"
             onClick={handleConfirm}
-            disabled={isPending || !isReasonValid}
+            disabled={isPending}
           >
-            {isPending ? tCommon("deleting") : t("deleteButton")}
+            {isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {tCommon("deleting")}
+              </>
+            ) : (
+              t("deleteButton")
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
